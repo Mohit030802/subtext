@@ -1,0 +1,84 @@
+# ─── Node / Next.js ───────────────────────────────────────────
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# ─── Python / FastAPI ─────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+.eggs/
+lib/
+lib64/
+*.so
+*.dylib
+
+# ─── Virtual Environments ─────────────────────────────────────
+.venv/
+venv/
+env/
+.env/
+ENV/
+
+# ─── Environment Variables ────────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+!.env.example
+
+# ─── Databases / Uploads ──────────────────────────────────────
+*.sqlite3
+*.db
+uploads/
+media/
+
+# ─── IDE / OS ─────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Testing ──────────────────────────────────────────────────
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# ─── Next.js specific ─────────────────────────────────────────
+.next/
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+
+# ─── Turbopack / Build cache ──────────────────────────────────
+.turbo/
+.cache/
+
+# ─── Bak files ────────────────────────────────────────────────
+*.bak
