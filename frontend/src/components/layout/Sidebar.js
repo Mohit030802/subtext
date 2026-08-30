@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import {
-  LayoutDashboard, Users, ChevronDown, ChevronRight,
-  FileText, FolderOpen, Building2, Plus, Zap,
+  LayoutDashboard, Users, ChevronDown,
+  FileText, FolderOpen, Building2, Plus, Zap, LogOut,
 } from "lucide-react";
 import { mockNavTree } from "@/lib/mock-data";
 
@@ -24,17 +25,12 @@ function DocNode({ doc, clientId, projectId }) {
     <Link
       href={href}
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "5px 8px 5px 10px",
-        borderRadius: "5px",
+        display: "flex", alignItems: "center", gap: "6px",
+        padding: "5px 8px 5px 10px", borderRadius: "5px",
         fontSize: "12px",
         color: active ? "#e4e4e7" : "var(--sidebar-fg)",
         background: active ? "var(--sidebar-accent)" : "transparent",
-        textDecoration: "none",
-        transition: "all 0.12s",
-        position: "relative",
+        textDecoration: "none", transition: "all 0.12s", position: "relative",
       }}
       onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
@@ -136,6 +132,11 @@ function ClientNode({ client }) {
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const user = session?.user;
+  const initials = user?.name
+    ? user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+    : "?";
 
   return (
     <aside style={{
@@ -203,13 +204,14 @@ export default function Sidebar() {
         {mockNavTree.map(client => (
           <ClientNode key={client.id} client={client} />
         ))}
-        <button style={{
-          display: "flex", alignItems: "center", gap: "6px",
-          width: "100%", marginTop: "8px", padding: "6px 8px", borderRadius: "6px",
-          fontSize: "12px", color: "var(--subtle-fg)", background: "transparent",
-          border: "1px dashed rgba(255,255,255,0.08)", cursor: "pointer",
-          transition: "all 0.12s",
-        }}
+        <button
+          style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            width: "100%", marginTop: "8px", padding: "6px 8px", borderRadius: "6px",
+            fontSize: "12px", color: "var(--subtle-fg)", background: "transparent",
+            border: "1px dashed rgba(255,255,255,0.08)", cursor: "pointer",
+            transition: "all 0.12s",
+          }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "var(--sidebar-fg)"; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
         >
@@ -218,22 +220,53 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* User */}
+      {/* User + Sign Out */}
       <div style={{
         borderTop: "1px solid var(--sidebar-border)",
         padding: "12px 16px",
-        display: "flex", alignItems: "center", gap: "10px",
       }}>
-        <div style={{
-          width: "28px", height: "28px", borderRadius: "50%",
-          background: "var(--primary-dim)",
-          border: "1px solid rgba(124,58,237,0.3)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "11px", fontWeight: 700, color: "#a78bfa", flexShrink: 0,
-        }}>D</div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: "12px", fontWeight: 600, color: "#e4e4e7", lineHeight: 1 }}>Demo User</div>
-          <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "3px" }}>demo@subtext.ai</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {user?.image ? (
+            <img
+              src={user.image}
+              alt={user.name || "User"}
+              style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0, objectFit: "cover" }}
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div style={{
+              width: "28px", height: "28px", borderRadius: "50%",
+              background: "rgba(124,58,237,0.2)",
+              border: "1px solid rgba(124,58,237,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "11px", fontWeight: 700, color: "#a78bfa", flexShrink: 0,
+            }}>{initials}</div>
+          )}
+
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: "#e4e4e7", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {user?.name || "User"}
+            </div>
+            <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {user?.email || ""}
+            </div>
+          </div>
+
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            title="Sign out"
+            style={{
+              width: "26px", height: "26px", borderRadius: "6px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
+              cursor: "pointer", flexShrink: 0, transition: "all 0.12s",
+              color: "var(--subtle-fg)",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(248,113,113,0.08)"; e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.color = "#f87171"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
+          >
+            <LogOut size={13} />
+          </button>
         </div>
       </div>
     </aside>
