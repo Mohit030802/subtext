@@ -1,18 +1,8 @@
-from app.models.client import Client
-from app.models.project import Project
-from app.models.document import Document, RiskScore
-from app.models.obligation import ContractObligation, ObligationType, PartyResponsible, ObligationStatus
-from app.models.clause_risk import ClauseRisk, RiskLevel
-
-__all__ = [
-    "Client",
-    "Project",
-    "Document",
-    "RiskScore",
-    "ContractObligation",
-    "ObligationType",
-    "PartyResponsible",
-    "ObligationStatus",
-    "ClauseRisk",
-    "RiskLevel",
-]
+from .user import User
+from .client import Client
+from .project import Project
+from .document import Document
+from .clause_risk import ClauseRisk
+from .obligation import Obligation
+from .chat_session import ChatSession
+from .chat_message import ChatMessage

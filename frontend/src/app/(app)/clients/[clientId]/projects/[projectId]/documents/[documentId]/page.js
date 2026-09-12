@@ -1,27 +1,35 @@
-import { mockClients, mockProjects, mockDocuments, mockClauseRisks, mockObligations, mockChatMessages } from "@/lib/mock-data";
+import { api } from "@/lib/api";
 import DocumentWorkspace from "@/components/document/DocumentWorkspace";
-import { notFound } from "next/navigation";
+import EmptyState from "@/components/ui/EmptyState";
+import { AlertTriangle } from "lucide-react";
 
 export default async function DocumentPage({ params }) {
   const { clientId, projectId, documentId } = await params;
+  let document = null;
+  let hasError = false;
 
-  const client = mockClients.find((c) => c.id === clientId);
-  const projects = mockProjects[clientId] || [];
-  const project = projects.find((p) => p.id === projectId);
-  const documents = mockDocuments[projectId] || [];
-  const document = documents.find((d) => d.id === documentId);
+  try {
+    document = await api.get(`/documents/${documentId}`);
+  } catch (error) {
+    console.error("Document fetch error:", error);
+    hasError = true;
+  }
 
-  if (!document || !project || !client) notFound();
-
-  const clauseRisks = mockClauseRisks[documentId] || [];
-  const obligations = mockObligations[documentId] || [];
+  if (hasError || !document) {
+    return (
+      <div style={{ maxWidth: "1280px", margin: "0 auto", paddingTop: "2rem" }}>
+        <EmptyState
+          icon={AlertTriangle}
+          title="Document not found"
+          description="Could not load document analysis."
+        />
+      </div>
+    );
+  }
 
   return (
-    <DocumentWorkspace
+    <DocumentWorkspace 
       document={document}
-      clauseRisks={clauseRisks}
-      obligations={obligations}
-      chatMessages={mockChatMessages}
       clientId={clientId}
       projectId={projectId}
     />

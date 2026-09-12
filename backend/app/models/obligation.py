@@ -1,67 +1,32 @@
 import uuid
-import enum
 from datetime import datetime, date
-from sqlalchemy import String, Text, Boolean, DateTime, Date, ForeignKey, Enum, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
+from sqlalchemy import String, ForeignKey, Date, Boolean, text
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
-
-class ObligationType(str, enum.Enum):
-    RENEWAL_NOTICE = "RENEWAL_NOTICE"
-    PAYMENT = "PAYMENT"
-    DELIVERABLE = "DELIVERABLE"
-    EXPIRY = "EXPIRY"
-    COMPLIANCE = "COMPLIANCE"
-    OTHER = "OTHER"
+if TYPE_CHECKING:
+    from .document import Document
+    from .project import Project
 
 
-class PartyResponsible(str, enum.Enum):
-    CLIENT = "CLIENT"
-    US = "US"
-    THIRD_PARTY = "THIRD_PARTY"
+class Obligation(Base):
+    __tablename__ = "obligations"
 
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    document_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), index=True)
+    project_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str] = mapped_column(String(500))
+    description: Mapped[str | None] = mapped_column(String)
+    due_date: Mapped[date | None] = mapped_column(Date)
+    obligation_type: Mapped[str | None] = mapped_column(String(50))
+    party_responsible: Mapped[str | None] = mapped_column(String(50))
+    status: Mapped[str] = mapped_column(String(20), server_default="PENDING")
+    is_synced_calendar: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    calendar_event_id: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(server_default=text("NOW()"))
+    updated_at: Mapped[datetime] = mapped_column(server_default=text("NOW()"), onupdate=text("NOW()"))
 
-class ObligationStatus(str, enum.Enum):
-    PENDING = "PENDING"
-    COMPLETED = "COMPLETED"
-    OVERDUE = "OVERDUE"
-
-
-class ContractObligation(Base):
-    __tablename__ = "contract_obligations"
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
-    document_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
-    )
-    project_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
-    )
-    title: Mapped[str] = mapped_column(String(500), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    obligation_type: Mapped[ObligationType] = mapped_column(
-        Enum(ObligationType), default=ObligationType.OTHER
-    )
-    party_responsible: Mapped[PartyResponsible] = mapped_column(
-        Enum(PartyResponsible), default=PartyResponsible.US
-    )
-    is_synced_calendar: Mapped[bool] = mapped_column(Boolean, default=False)
-    calendar_event_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    status: Mapped[ObligationStatus] = mapped_column(
-        Enum(ObligationStatus), default=ObligationStatus.PENDING
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-
-    # Relationships
-    document: Mapped["Document"] = relationship(
-        "Document", back_populates="obligations"
-    )
-
-    def __repr__(self) -> str:
-        return f"<Obligation {self.title} [{self.status}]>"
+    document: Mapped["Document"] = relationship(back_populates="obligations")
+    project: Mapped["Project"] = relationship(back_populates="obligations")

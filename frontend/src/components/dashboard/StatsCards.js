@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { FileText, AlertTriangle, Calendar, Users } from "lucide-react";
-import { mockDashboardStats } from "@/lib/mock-data";
+import Skeleton from "@/components/ui/Skeleton";
 
 function useCounter(target, duration = 900) {
   const [v, setV] = useState(0);
   useEffect(() => {
-    if (target === 0) return;
+    if (target === 0 || target === undefined || target === null) return;
     let start = null;
     const step = (ts) => {
       if (!start) start = ts;
@@ -22,9 +22,9 @@ function useCounter(target, duration = 900) {
   return v;
 }
 
-const CARDS = [
+const CARDS_CONFIG = [
   {
-    key: "totalDocuments",
+    key: "total_documents",
     label: "Documents",
     sublabel: "Total analyzed",
     icon: FileText,
@@ -32,7 +32,7 @@ const CARDS = [
     accentBg: "rgba(124,58,237,0.1)",
   },
   {
-    key: "highRiskClauses",
+    key: "high_risk_count",
     label: "High-Risk Clauses",
     sublabel: "Need review",
     icon: AlertTriangle,
@@ -40,7 +40,7 @@ const CARDS = [
     accentBg: "rgba(248,113,113,0.1)",
   },
   {
-    key: "upcomingDeadlines",
+    key: "upcoming_obligations_count",
     label: "Upcoming Deadlines",
     sublabel: "Next 90 days",
     icon: Calendar,
@@ -48,7 +48,7 @@ const CARDS = [
     accentBg: "rgba(251,191,36,0.1)",
   },
   {
-    key: "totalClients",
+    key: "total_clients",
     label: "Active Clients",
     sublabel: "Under management",
     icon: Users,
@@ -57,8 +57,9 @@ const CARDS = [
   },
 ];
 
-function StatCard({ card, delay }) {
-  const val = useCounter(mockDashboardStats[card.key]);
+function StatCard({ card, stats, delay }) {
+  const targetValue = stats ? stats[card.key] || 0 : 0;
+  const val = useCounter(targetValue);
   const Icon = card.icon;
 
   return (
@@ -81,12 +82,16 @@ function StatCard({ card, delay }) {
 
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
-          <div style={{
-            fontSize: "36px", fontWeight: 800, color: "#fafafa",
-            letterSpacing: "-0.04em", lineHeight: 1, fontVariantNumeric: "tabular-nums",
-          }}>
-            {val}
-          </div>
+          {stats ? (
+            <div style={{
+              fontSize: "36px", fontWeight: 800, color: "#fafafa",
+              letterSpacing: "-0.04em", lineHeight: 1, fontVariantNumeric: "tabular-nums",
+            }}>
+              {val}
+            </div>
+          ) : (
+            <Skeleton width="60px" height="36px" />
+          )}
           <div style={{ fontSize: "13px", fontWeight: 600, color: "#a1a1aa", marginTop: "6px" }}>
             {card.label}
           </div>
@@ -106,11 +111,11 @@ function StatCard({ card, delay }) {
   );
 }
 
-export default function StatsCards() {
+export default function StatsCards({ stats }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
-      {CARDS.map((card, i) => (
-        <StatCard key={card.key} card={card} delay={i + 1} />
+      {CARDS_CONFIG.map((card, i) => (
+        <StatCard key={card.key} card={card} stats={stats} delay={i + 1} />
       ))}
     </div>
   );

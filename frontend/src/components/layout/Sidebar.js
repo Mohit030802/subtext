@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard, Users, ChevronDown,
   FileText, FolderOpen, Building2, Plus, Zap, LogOut,
 } from "lucide-react";
-import { mockNavTree } from "@/lib/mock-data";
 
 const RISK_COLORS = {
   HIGH:   "#f87171",
@@ -57,7 +56,7 @@ function DocNode({ doc, clientId, projectId }) {
 
 function ProjectNode({ project, clientId }) {
   const [open, setOpen] = useState(true);
-  const hasDocs = project.documents.length > 0;
+  const hasDocs = project.documents?.length > 0;
 
   return (
     <div>
@@ -121,17 +120,23 @@ function ClientNode({ client }) {
       </button>
       {open && (
         <div style={{ marginLeft: "16px", marginTop: "2px", marginBottom: "2px" }}>
-          {client.projects.map(p => (
+          {client.projects?.map(p => (
             <ProjectNode key={p.id} project={p} clientId={client.id} />
           ))}
+          {(!client.projects || client.projects.length === 0) && (
+            <div style={{ fontSize: "11px", color: "var(--subtle-fg)", padding: "4px 8px", fontStyle: "italic" }}>
+              No projects yet
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ navTree = [] }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
   const initials = user?.name
@@ -198,26 +203,49 @@ export default function Sidebar() {
       {/* Divider */}
       <div style={{ height: "1px", background: "var(--sidebar-border)", margin: "4px 0" }} />
 
-      {/* Workspace Tree */}
+      {/* Workspace Tree — real data from API */}
       <div style={{ flex: 1, overflowY: "auto", padding: "10px 8px" }} className="no-scrollbar">
         <div className="section-label" style={{ marginBottom: "8px" }}>Workspace</div>
-        {mockNavTree.map(client => (
-          <ClientNode key={client.id} client={client} />
-        ))}
-        <button
+
+        {navTree.length === 0 ? (
+          <div style={{
+            padding: "16px 8px", textAlign: "center",
+            fontSize: "12px", color: "var(--subtle-fg)", lineHeight: 1.5,
+          }}>
+            No clients yet.
+            <br />
+            <button
+              onClick={() => router.push("/clients")}
+              style={{
+                marginTop: "8px", fontSize: "12px", color: "var(--primary)",
+                background: "none", border: "none", cursor: "pointer", textDecoration: "underline",
+              }}
+            >
+              Create your first client →
+            </button>
+          </div>
+        ) : (
+          navTree.map(client => (
+            <ClientNode key={client.id} client={client} />
+          ))
+        )}
+
+        {/* Add Client shortcut */}
+        <Link
+          href="/clients"
           style={{
             display: "flex", alignItems: "center", gap: "6px",
             width: "100%", marginTop: "8px", padding: "6px 8px", borderRadius: "6px",
             fontSize: "12px", color: "var(--subtle-fg)", background: "transparent",
             border: "1px dashed rgba(255,255,255,0.08)", cursor: "pointer",
-            transition: "all 0.12s",
+            transition: "all 0.12s", textDecoration: "none",
           }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "var(--sidebar-fg)"; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
         >
           <Plus size={12} />
           Add Client
-        </button>
+        </Link>
       </div>
 
       {/* User + Sign Out */}

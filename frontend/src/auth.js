@@ -6,28 +6,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      authorization: {
+        params: {
+          // Only basic scopes at login — no sensitive scopes
+          // Drive access is requested separately when user clicks "Import from Drive"
+          scope: "openid email profile",
+          access_type: "offline",
+        }
+      }
     }),
   ],
-  pages: {
-    signIn: "/login",
-  },
+  pages: { signIn: "/login" },
+  session: { strategy: "jwt" },
   callbacks: {
+    async jwt({ token, account }) {
+      if (account) {
+        token.googleId = account.providerAccountId;
+        token.accessToken = account.access_token;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      session.googleId = token.googleId;
+      session.accessToken = token.accessToken;
+      return session;
+    },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnLogin = nextUrl.pathname === "/login";
-
       if (isOnLogin) {
-        // Already logged in → redirect to dashboard
         if (isLoggedIn) return Response.redirect(new URL("/", nextUrl));
         return true;
       }
-
-      // Protected route → must be logged in
       if (!isLoggedIn) return false;
       return true;
-    },
-    session({ session, token }) {
-      return session;
     },
   },
 });
