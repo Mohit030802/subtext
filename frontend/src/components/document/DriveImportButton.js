@@ -83,6 +83,7 @@ export default function DriveImportButton({ projectId }) {
             google_drive_view_url: `https://drive.google.com/file/d/${file.id}/view`,
             google_drive_mime_type: file.mimeType,
             page_count: null,
+            drive_access_token: accessToken, // backend uses this to download + process
           });
           setStatus("idle");
         } catch (err) {

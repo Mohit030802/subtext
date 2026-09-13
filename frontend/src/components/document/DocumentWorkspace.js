@@ -7,6 +7,7 @@ import RisksTab from "./RisksTab";
 import ObligationsTab from "./ObligationsTab";
 import RedlinesTab from "./RedlinesTab";
 import VaultChat from "./VaultChat";
+import ProcessDocumentPanel from "./ProcessDocumentPanel";
 
 const TABS = [
   { id: "risks",       label: "Traps & Risks", icon: AlertTriangle },
@@ -141,51 +142,62 @@ export default function DocumentWorkspace({ document: doc, clientId, projectId }
 
         {/* Right: Analysis Panel */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          {/* Tab Bar */}
-          <div style={{
-            display: "flex", alignItems: "stretch",
-            background: "var(--surface)", borderBottom: "1px solid var(--border)",
-            flexShrink: 0, overflowX: "auto",
-          }} className="no-scrollbar">
-            {TABS.map(({ id, label, icon: Icon }) => {
-              const active = activeTab === id;
-              return (
-                <button
-                  key={id}
-                  onClick={() => setActiveTab(id)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "6px",
-                    padding: "12px 16px", fontSize: "12px", fontWeight: 500,
-                    color: active ? "#e4e4e7" : "var(--muted-fg)",
-                    background: "transparent", border: "none",
-                    borderBottom: active ? "2px solid #7c3aed" : "2px solid transparent",
-                    cursor: "pointer", whiteSpace: "nowrap",
-                    transition: "all 0.12s",
-                  }}
-                  onMouseEnter={e => { if (!active) e.currentTarget.style.color = "#d4d4d8"; }}
-                  onMouseLeave={e => { if (!active) e.currentTarget.style.color = "var(--muted-fg)"; }}
-                >
-                  <Icon size={13} />
-                  {label}
-                  {id === "risks" && highCount > 0 && (
-                    <span style={{
-                      marginLeft: "2px", padding: "1px 5px", borderRadius: "99px",
-                      fontSize: "10px", fontWeight: 700,
-                      background: "rgba(248,113,113,0.12)", color: "#f87171",
-                    }}>{highCount}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          {doc.status !== "ANALYZED" ? (
+            /* ── Not yet processed: show CTA / spinner ── */
+            <ProcessDocumentPanel
+              documentId={doc.id}
+              initialStatus={doc.status || "PENDING"}
+            />
+          ) : (
+            /* ── Processed: show analysis tabs ── */
+            <>
+              {/* Tab Bar */}
+              <div style={{
+                display: "flex", alignItems: "stretch",
+                background: "var(--surface)", borderBottom: "1px solid var(--border)",
+                flexShrink: 0, overflowX: "auto",
+              }} className="no-scrollbar">
+                {TABS.map(({ id, label, icon: Icon }) => {
+                  const active = activeTab === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setActiveTab(id)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: "6px",
+                        padding: "12px 16px", fontSize: "12px", fontWeight: 500,
+                        color: active ? "#e4e4e7" : "var(--muted-fg)",
+                        background: "transparent", border: "none",
+                        borderBottom: active ? "2px solid #7c3aed" : "2px solid transparent",
+                        cursor: "pointer", whiteSpace: "nowrap",
+                        transition: "all 0.12s",
+                      }}
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.color = "#d4d4d8"; }}
+                      onMouseLeave={e => { if (!active) e.currentTarget.style.color = "var(--muted-fg)"; }}
+                    >
+                      <Icon size={13} />
+                      {label}
+                      {id === "risks" && highCount > 0 && (
+                        <span style={{
+                          marginLeft: "2px", padding: "1px 5px", borderRadius: "99px",
+                          fontSize: "10px", fontWeight: 700,
+                          background: "rgba(248,113,113,0.12)", color: "#f87171",
+                        }}>{highCount}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
 
-          {/* Tab Content */}
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {activeTab === "risks"       && <RisksTab       clauseRisks={clauseRisks}  onScrollToClause={scrollToClause} />}
-            {activeTab === "obligations" && <ObligationsTab obligations={obligations}  />}
-            {activeTab === "redlines"    && <RedlinesTab    clauseRisks={clauseRisks}  />}
-            {activeTab === "chat"        && <VaultChat      messages={chatMessages}     documentTitle={doc.title} />}
-          </div>
+              {/* Tab Content */}
+              <div style={{ flex: 1, overflowY: "auto" }}>
+                {activeTab === "risks"       && <RisksTab       clauseRisks={clauseRisks}  onScrollToClause={scrollToClause} />}
+                {activeTab === "obligations" && <ObligationsTab obligations={obligations}  />}
+                {activeTab === "redlines"    && <RedlinesTab    clauseRisks={clauseRisks}  />}
+                {activeTab === "chat"        && <VaultChat      messages={chatMessages}     documentTitle={doc.title} />}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

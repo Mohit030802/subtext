@@ -1,7 +1,10 @@
 import uuid
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import Optional, Any, List
+from typing import Optional, Any, List, TYPE_CHECKING
+
+from app.schemas.clause_risk import ClauseRiskOut
+from app.schemas.obligation import ObligationOut
 
 
 class DocumentBase(BaseModel):
@@ -15,7 +18,8 @@ class DocumentBase(BaseModel):
 
 class DocumentCreate(DocumentBase):
     # project_id comes from the URL path, not the request body
-    pass
+    # drive_access_token is the GIS token from the browser — used to download the file
+    drive_access_token: Optional[str] = None
 
 
 class DocumentOut(DocumentBase):
@@ -32,5 +36,6 @@ class DocumentOut(DocumentBase):
 
 
 class DocumentWithAnalysis(DocumentOut):
-    clause_risks: List[Any] = []
-    obligations: List[Any] = []
+    # Use concrete types so Pydantic v2 can serialize ORM objects via from_attributes
+    clause_risks: List[ClauseRiskOut] = []
+    obligations: List[ObligationOut] = []
