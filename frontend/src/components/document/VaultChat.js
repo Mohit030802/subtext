@@ -15,7 +15,7 @@ function Message({ msg }) {
         <p key={i} style={{ margin: "0 0 6px" }}>
           {parts.map((p, j) =>
             p.startsWith("**") && p.endsWith("**")
-              ? <strong key={j} style={{ color: "#e4e4e7", fontWeight: 600 }}>{p.slice(2,-2)}</strong>
+              ? <strong key={j} style={{ color: "var(--text-1)", fontWeight: 600 }}>{p.slice(2,-2)}</strong>
               : p
           )}
         </p>
@@ -41,14 +41,14 @@ function Message({ msg }) {
         fontSize: "12px", lineHeight: 1.65,
         background: isUser ? "#7c3aed" : "var(--card)",
         border: isUser ? "none" : "1px solid var(--border)",
-        color: isUser ? "#fff" : "#a1a1aa",
+        color: isUser ? "#fff" : "var(--text-3)",
       }}>
         {isUser
           ? <p style={{ margin: 0 }}>{msg.content}</p>
           : <div>{renderContent(msg.content)}</div>
         }
         {msg.citations?.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px", paddingTop: "8px", borderTop: "1px solid var(--border)" }}>
             {msg.citations.map(c => (
               <span key={c.chunk_id} style={{
                 fontSize: "10px", padding: "2px 7px", borderRadius: "4px", cursor: "pointer",
@@ -126,7 +126,7 @@ export default function VaultChat({ messages, documentTitle }) {
             rows={1}
             style={{
               flex: 1, background: "transparent", border: "none", outline: "none", resize: "none",
-              fontSize: "13px", color: "#d4d4d8", lineHeight: 1.5,
+              fontSize: "13px", color: "var(--text-2)", lineHeight: 1.5,
               maxHeight: "100px", fontFamily: "var(--font-inter), system-ui, sans-serif",
             }}
           />
@@ -135,13 +135,13 @@ export default function VaultChat({ messages, documentTitle }) {
             disabled={!input.trim()}
             style={{
               width: "32px", height: "32px", borderRadius: "7px",
-              background: input.trim() ? "#7c3aed" : "rgba(255,255,255,0.05)",
+              background: input.trim() ? "#7c3aed" : "var(--surface-sm)",
               border: "none", cursor: input.trim() ? "pointer" : "default",
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "all 0.15s", flexShrink: 0,
             }}
           >
-            <Send size={14} color={input.trim() ? "#fff" : "#52525b"} />
+            <Send size={14} color={input.trim() ? "#fff" : "var(--subtle-fg)"} />
           </button>
         </div>
         <p style={{ fontSize: "10px", color: "var(--subtle-fg)", textAlign: "center", marginTop: "6px" }}>

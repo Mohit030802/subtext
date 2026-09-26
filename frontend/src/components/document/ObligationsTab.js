@@ -38,7 +38,7 @@ export default function ObligationsTab({ obligations }) {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "13px", fontWeight: 500, color: "#d4d4d8", marginBottom: "3px" }}>{obl.title}</div>
+                <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-2)", marginBottom: "3px" }}>{obl.title}</div>
                 {obl.description && (
                   <div style={{ fontSize: "11px", color: "var(--subtle-fg)", lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                     {obl.description}
@@ -48,20 +48,20 @@ export default function ObligationsTab({ obligations }) {
               <button>
                 {obl.is_synced_calendar
                   ? <CalendarCheck size={15} color="#34d399" />
-                  : <CalendarPlus size={15} color="#52525b" style={{ transition: "color 0.12s" }}
-                      onMouseEnter={e => e.currentTarget.style.color="#a1a1aa"}
-                      onMouseLeave={e => e.currentTarget.style.color="#52525b"}
+                  : <CalendarPlus size={15} color="var(--subtle-fg)" style={{ transition: "color 0.12s" }}
+                      onMouseEnter={e => e.currentTarget.style.color="var(--text-3)"}
+                      onMouseLeave={e => e.currentTarget.style.color="var(--subtle-fg)"}
                     />
                 }
               </button>
             </div>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px" }}>
-              <span style={{ fontSize: "12px", fontWeight: obl.status==="OVERDUE"?600:400, color: obl.status==="OVERDUE"?"#f87171":"#71717a" }}>
+              <span style={{ fontSize: "12px", fontWeight: obl.status==="OVERDUE"?600:400, color: obl.status==="OVERDUE"?"#f87171":"var(--muted-fg)" }}>
                 📅 {formatDate(obl.due_date)}
               </span>
               <span style={{ color: "var(--subtle-fg)" }}>·</span>
-              <span style={{ fontSize: "11px", padding: "2px 7px", borderRadius: "4px", background: "rgba(255,255,255,0.04)", color: "var(--muted-fg)" }}>
+              <span style={{ fontSize: "11px", padding: "2px 7px", borderRadius: "4px", background: "var(--surface-sm)", color: "var(--muted-fg)" }}>
                 {OBL_TYPE[obl.obligation_type]||"Other"}
               </span>
               <span className="risk-pill" style={{ background: st.bg, color: st.color }}>

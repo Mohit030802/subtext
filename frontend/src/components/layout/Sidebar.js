@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import {
-  LayoutDashboard, Users, ChevronDown, ChevronRight,
-  FileText, FolderOpen, Building2, Plus, Zap,
+  LayoutDashboard, Users, ChevronDown,
+  FileText, FolderOpen, Building2, Plus, Zap, LogOut,
 } from "lucide-react";
-import { mockNavTree } from "@/lib/mock-data";
 
 const RISK_COLORS = {
   HIGH:   "#f87171",
@@ -24,19 +24,14 @@ function DocNode({ doc, clientId, projectId }) {
     <Link
       href={href}
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "5px 8px 5px 10px",
-        borderRadius: "5px",
+        display: "flex", alignItems: "center", gap: "6px",
+        padding: "5px 8px 5px 10px", borderRadius: "5px",
         fontSize: "12px",
-        color: active ? "#e4e4e7" : "var(--sidebar-fg)",
+        color: active ? "var(--text-1)" : "var(--sidebar-fg)",
         background: active ? "var(--sidebar-accent)" : "transparent",
-        textDecoration: "none",
-        transition: "all 0.12s",
-        position: "relative",
+        textDecoration: "none", transition: "all 0.12s", position: "relative",
       }}
-      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--surface-sm)"; }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
     >
       {active && (
@@ -61,7 +56,7 @@ function DocNode({ doc, clientId, projectId }) {
 
 function ProjectNode({ project, clientId }) {
   const [open, setOpen] = useState(true);
-  const hasDocs = project.documents.length > 0;
+  const hasDocs = project.documents?.length > 0;
 
   return (
     <div>
@@ -73,7 +68,7 @@ function ProjectNode({ project, clientId }) {
           fontSize: "12px", color: "var(--sidebar-fg)", background: "transparent",
           border: "none", cursor: "pointer", transition: "all 0.12s", textAlign: "left",
         }}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+        onMouseEnter={e => e.currentTarget.style.background = "var(--surface-sm)"}
         onMouseLeave={e => e.currentTarget.style.background = "transparent"}
       >
         {hasDocs
@@ -106,11 +101,11 @@ function ClientNode({ client }) {
         style={{
           display: "flex", alignItems: "center", gap: "6px",
           width: "100%", padding: "6px 8px", borderRadius: "6px",
-          fontSize: "12px", fontWeight: 500, color: "#a1a1aa",
+          fontSize: "12px", fontWeight: 500, color: "var(--text-3)",
           background: "transparent", border: "none", cursor: "pointer",
           transition: "all 0.12s", textAlign: "left",
         }}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+        onMouseEnter={e => e.currentTarget.style.background = "var(--surface-sm)"}
         onMouseLeave={e => e.currentTarget.style.background = "transparent"}
       >
         <ChevronDown size={11} style={{
@@ -125,17 +120,28 @@ function ClientNode({ client }) {
       </button>
       {open && (
         <div style={{ marginLeft: "16px", marginTop: "2px", marginBottom: "2px" }}>
-          {client.projects.map(p => (
+          {client.projects?.map(p => (
             <ProjectNode key={p.id} project={p} clientId={client.id} />
           ))}
+          {(!client.projects || client.projects.length === 0) && (
+            <div style={{ fontSize: "11px", color: "var(--subtle-fg)", padding: "4px 8px", fontStyle: "italic" }}>
+              No projects yet
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ navTree = [] }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = useSession();
+  const user = session?.user;
+  const initials = user?.name
+    ? user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+    : "?";
 
   return (
     <aside style={{
@@ -158,7 +164,7 @@ export default function Sidebar() {
           <Zap size={14} color="#fff" fill="#fff" />
         </div>
         <div>
-          <div style={{ fontSize: "14px", fontWeight: 700, color: "#fafafa", lineHeight: 1 }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg)", lineHeight: 1 }}>
             Subtext
           </div>
           <div style={{ fontSize: "10px", color: "var(--subtle-fg)", marginTop: "3px", letterSpacing: "0.02em" }}>
@@ -197,43 +203,98 @@ export default function Sidebar() {
       {/* Divider */}
       <div style={{ height: "1px", background: "var(--sidebar-border)", margin: "4px 0" }} />
 
-      {/* Workspace Tree */}
+      {/* Workspace Tree — real data from API */}
       <div style={{ flex: 1, overflowY: "auto", padding: "10px 8px" }} className="no-scrollbar">
         <div className="section-label" style={{ marginBottom: "8px" }}>Workspace</div>
-        {mockNavTree.map(client => (
-          <ClientNode key={client.id} client={client} />
-        ))}
-        <button style={{
-          display: "flex", alignItems: "center", gap: "6px",
-          width: "100%", marginTop: "8px", padding: "6px 8px", borderRadius: "6px",
-          fontSize: "12px", color: "var(--subtle-fg)", background: "transparent",
-          border: "1px dashed rgba(255,255,255,0.08)", cursor: "pointer",
-          transition: "all 0.12s",
-        }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "var(--sidebar-fg)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
+
+        {navTree.length === 0 ? (
+          <div style={{
+            padding: "16px 8px", textAlign: "center",
+            fontSize: "12px", color: "var(--subtle-fg)", lineHeight: 1.5,
+          }}>
+            No clients yet.
+            <br />
+            <button
+              onClick={() => router.push("/clients")}
+              style={{
+                marginTop: "8px", fontSize: "12px", color: "var(--primary)",
+                background: "none", border: "none", cursor: "pointer", textDecoration: "underline",
+              }}
+            >
+              Create your first client →
+            </button>
+          </div>
+        ) : (
+          navTree.map(client => (
+            <ClientNode key={client.id} client={client} />
+          ))
+        )}
+
+        {/* Add Client shortcut */}
+        <Link
+          href="/clients"
+          style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            width: "100%", marginTop: "8px", padding: "6px 8px", borderRadius: "6px",
+            fontSize: "12px", color: "var(--subtle-fg)", background: "transparent",
+            border: "1px dashed var(--border)", cursor: "pointer",
+            transition: "all 0.12s", textDecoration: "none",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--sidebar-fg)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
         >
           <Plus size={12} />
           Add Client
-        </button>
+        </Link>
       </div>
 
-      {/* User */}
+      {/* User + Sign Out */}
       <div style={{
         borderTop: "1px solid var(--sidebar-border)",
         padding: "12px 16px",
-        display: "flex", alignItems: "center", gap: "10px",
       }}>
-        <div style={{
-          width: "28px", height: "28px", borderRadius: "50%",
-          background: "var(--primary-dim)",
-          border: "1px solid rgba(124,58,237,0.3)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "11px", fontWeight: 700, color: "#a78bfa", flexShrink: 0,
-        }}>D</div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: "12px", fontWeight: 600, color: "#e4e4e7", lineHeight: 1 }}>Demo User</div>
-          <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "3px" }}>demo@subtext.ai</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {user?.image ? (
+            <img
+              src={user.image}
+              alt={user.name || "User"}
+              style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0, objectFit: "cover" }}
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div style={{
+              width: "28px", height: "28px", borderRadius: "50%",
+              background: "rgba(124,58,237,0.2)",
+              border: "1px solid rgba(124,58,237,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "11px", fontWeight: 700, color: "#a78bfa", flexShrink: 0,
+            }}>{initials}</div>
+          )}
+
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-1)", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {user?.name || "User"}
+            </div>
+            <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {user?.email || ""}
+            </div>
+          </div>
+
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            title="Sign out"
+            style={{
+              width: "26px", height: "26px", borderRadius: "6px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "transparent", border: "1px solid var(--border)",
+              cursor: "pointer", flexShrink: 0, transition: "all 0.12s",
+              color: "var(--subtle-fg)",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(248,113,113,0.08)"; e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.color = "#f87171"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
+          >
+            <LogOut size={13} />
+          </button>
         </div>
       </div>
     </aside>
