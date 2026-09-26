@@ -70,7 +70,13 @@ async def get_recent_documents(
     db: AsyncSession = Depends(get_db)
 ):
     stmt = (
-        select(Document, Project.name.label('project_name'), Client.name.label('client_name'))
+        select(
+            Document,
+            Project.id.label('project_id'),
+            Project.name.label('project_name'),
+            Client.id.label('client_id'),
+            Client.name.label('client_name'),
+        )
         .select_from(Document)
         .join(Project, Project.id == Document.project_id)
         .join(Client, Client.id == Project.client_id)
@@ -82,9 +88,11 @@ async def get_recent_documents(
     rows = result.all()
     
     docs = []
-    for doc, proj_name, cli_name in rows:
+    for doc, proj_id, proj_name, cli_id, cli_name in rows:
         d = doc.__dict__.copy()
+        d['project_id'] = proj_id
         d['project_name'] = proj_name
+        d['client_id'] = cli_id
         d['client_name'] = cli_name
         docs.append(d)
     return docs
@@ -97,7 +105,15 @@ async def get_upcoming_obligations(
     today = datetime.now(timezone.utc).date()
     
     stmt = (
-        select(Obligation, Document.title.label('document_title'), Project.name.label('project_name'), Client.name.label('client_name'))
+        select(
+            Obligation,
+            Document.id.label('document_id'),
+            Document.title.label('document_title'),
+            Project.id.label('project_id'),
+            Project.name.label('project_name'),
+            Client.id.label('client_id'),
+            Client.name.label('client_name'),
+        )
         .select_from(Obligation)
         .join(Document, Document.id == Obligation.document_id)
         .join(Project, Project.id == Document.project_id)
@@ -112,10 +128,13 @@ async def get_upcoming_obligations(
     rows = result.all()
     
     obls = []
-    for obl, doc_title, proj_name, cli_name in rows:
+    for obl, doc_id, doc_title, proj_id, proj_name, cli_id, cli_name in rows:
         o = obl.__dict__.copy()
+        o['document_id'] = doc_id
         o['document_title'] = doc_title
+        o['project_id'] = proj_id
         o['project_name'] = proj_name
+        o['client_id'] = cli_id
         o['client_name'] = cli_name
         obls.append(o)
     return obls

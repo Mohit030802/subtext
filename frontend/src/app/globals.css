@@ -47,6 +47,9 @@
 
   /* Text */
   --fg:           #fafafa;
+  --text-1:       #e4e4e7;   /* secondary headings, section titles */
+  --text-2:       #d4d4d8;   /* body text, list items */
+  --text-3:       #a1a1aa;   /* labels, metadata */
   --muted-fg:     #71717a;
   --subtle-fg:    #52525b;
 
@@ -78,6 +81,57 @@
   --muted:          #18181b;
 
   --radius: 8px;
+
+  /* Surface overlays — replace inline rgba(255,255,255,...) */
+  --surface-xs:     rgba(255,255,255,0.03);
+  --surface-sm:     rgba(255,255,255,0.04);
+  --surface-md:     rgba(255,255,255,0.06);
+  --surface-border: rgba(255,255,255,0.07);
+}
+
+/* ── Light theme overrides (toggled via JS: html.light) ── */
+html.light {
+  --bg:           #f4f4f5;
+  --surface:      #ffffff;
+  --card:         #ffffff;
+  --card-hover:   #f1f1f3;
+  --overlay:      #e4e4e7;
+
+  --fg:           #09090b;
+  --text-1:       #18181b;
+  --text-2:       #27272a;
+  --text-3:       #52525b;
+  --muted-fg:     #71717a;
+  --subtle-fg:    #71717a;
+
+  --border:       rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.16);
+
+  --primary:      #7c3aed;
+  --primary-dim:  rgba(124,58,237,0.1);
+
+  --red-dim:      rgba(248,113,113,0.1);
+  --amber-dim:    rgba(251,191,36,0.1);
+  --green-dim:    rgba(52,211,153,0.1);
+  --blue-dim:     rgba(96,165,250,0.1);
+  --purple-dim:   rgba(167,139,250,0.1);
+
+  --sidebar-bg:     #ffffff;
+  --sidebar-fg:     #3f3f46;
+  --sidebar-border: rgba(0,0,0,0.06);
+  --sidebar-accent: rgba(124,58,237,0.08);
+  --muted:          #f4f4f5;
+
+  /* Surface overlays */
+  --surface-xs:     rgba(0,0,0,0.02);
+  --surface-sm:     rgba(0,0,0,0.03);
+  --surface-md:     rgba(0,0,0,0.05);
+  --surface-border: rgba(0,0,0,0.07);
+}
+
+/* Header in light mode needs a white background */
+html.light header {
+  background: rgba(255,255,255,0.92) !important;
 }
 
 /* ── Base Reset ── */

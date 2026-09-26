@@ -35,7 +35,7 @@ export default function ClientPageContent({ clients = [], hasError }) {
       {/* Header */}
       <div className="fade-up" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "24px" }}>
         <div>
-          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#fafafa", letterSpacing: "-0.03em" }}>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em" }}>
             Clients
           </h1>
           <p style={{ fontSize: "13px", color: "var(--subtle-fg)", marginTop: "6px" }}>
@@ -83,7 +83,7 @@ export default function ClientPageContent({ clients = [], hasError }) {
                       <Building2 size={16} color={ind.color} />
                     </div>
                     <div>
-                      <div style={{ fontSize: "14px", fontWeight: 600, color: "#e4e4e7", lineHeight: 1.3 }}>{client.name}</div>
+                      <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-1)", lineHeight: 1.3 }}>{client.name}</div>
                       <span style={{
                         display: "inline-block", marginTop: "4px",
                         fontSize: "10px", fontWeight: 600, padding: "1px 6px", borderRadius: "4px",
@@ -103,10 +103,10 @@ export default function ClientPageContent({ clients = [], hasError }) {
                   ].map(({ value, label, color }) => (
                     <div key={label} style={{
                       padding: "10px 8px", borderRadius: "6px", textAlign: "center",
-                      background: color ? "rgba(248,113,113,0.06)" : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${color ? "rgba(248,113,113,0.12)" : "rgba(255,255,255,0.04)"}`,
+                      background: color ? "rgba(248,113,113,0.06)" : "var(--surface-xs)",
+                      border: `1px solid ${color ? "rgba(248,113,113,0.12)" : "var(--surface-border)"}`,
                     }}>
-                      <div style={{ fontSize: "18px", fontWeight: 700, color: color || "#fafafa", fontVariantNumeric: "tabular-nums" }}>{value}</div>
+                      <div style={{ fontSize: "18px", fontWeight: 700, color: color || "var(--fg)", fontVariantNumeric: "tabular-nums" }}>{value}</div>
                       <div style={{ fontSize: "10px", color: color ? "#f87171" + "80" : "var(--subtle-fg)", marginTop: "2px" }}>{label}</div>
                     </div>
                   ))}

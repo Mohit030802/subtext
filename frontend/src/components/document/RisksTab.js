@@ -42,7 +42,7 @@ export default function RisksTab({ clauseRisks, onScrollToClause }) {
             {/* Card Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.04)",
+              padding: "10px 14px", borderBottom: "1px solid var(--border)",
               background: cfg.bg,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -57,10 +57,10 @@ export default function RisksTab({ clauseRisks, onScrollToClause }) {
                 style={{
                   display: "flex", alignItems: "center", gap: "5px",
                   fontSize: "11px", fontWeight: 500, padding: "4px 9px", borderRadius: "5px",
-                  background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)",
+                  background: "var(--surface-sm)", border: "1px solid var(--border)",
                   color: "var(--muted-fg)", cursor: "pointer", transition: "all 0.12s",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.color = "#e4e4e7"; e.currentTarget.style.borderColor = "var(--border-hover)"; }}
+                onMouseEnter={e => { e.currentTarget.style.color = "var(--text-1)"; e.currentTarget.style.borderColor = "var(--border-hover)"; }}
                 onMouseLeave={e => { e.currentTarget.style.color = "var(--muted-fg)"; e.currentTarget.style.borderColor = "var(--border)"; }}
               >
                 <Eye size={12} /> View in doc
@@ -71,7 +71,7 @@ export default function RisksTab({ clauseRisks, onScrollToClause }) {
             <div style={{ padding: "12px 14px 10px" }}>
               <blockquote style={{
                 fontSize: "12px", lineHeight: 1.7, fontStyle: "italic",
-                color: "#a1a1aa", borderLeft: `2px solid ${cfg.left}40`,
+                color: "var(--text-3)", borderLeft: `2px solid ${cfg.left}40`,
                 paddingLeft: "12px", margin: 0,
               }}>
                 "{risk.clause_text}"
@@ -81,13 +81,13 @@ export default function RisksTab({ clauseRisks, onScrollToClause }) {
             {/* Explanation */}
             <div style={{ padding: "0 14px 12px" }}>
               <div style={{
-                background: "rgba(255,255,255,0.025)", borderRadius: "6px",
+                background: "var(--surface-xs)", borderRadius: "6px",
                 padding: "10px 12px",
               }}>
                 <div style={{ fontSize: "10px", fontWeight: 700, color: "var(--subtle-fg)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>
                   Why this matters
                 </div>
-                <p style={{ fontSize: "12px", color: "#a1a1aa", lineHeight: 1.6, margin: 0 }}>
+                <p style={{ fontSize: "12px", color: "var(--text-3)", lineHeight: 1.6, margin: 0 }}>
                   {risk.explanation}
                 </p>
               </div>

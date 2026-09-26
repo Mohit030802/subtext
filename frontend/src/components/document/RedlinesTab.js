@@ -32,7 +32,7 @@ function Card({ risk, index }) {
     >
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.04)",
+        padding: "10px 14px", borderBottom: "1px solid var(--border)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span className="risk-pill" style={{ background: cfg.bg, color: cfg.color }}><span className="risk-pill-dot" style={{ background: cfg.color }}/>{risk.risk_level}</span>
@@ -43,7 +43,7 @@ function Card({ risk, index }) {
           style={{
             display: "flex", alignItems: "center", gap: "5px",
             fontSize: "11px", fontWeight: 500, padding: "4px 9px", borderRadius: "5px",
-            background: copied ? "rgba(52,211,153,0.08)" : "rgba(255,255,255,0.04)",
+            background: copied ? "rgba(52,211,153,0.08)" : "var(--surface-sm)",
             border: `1px solid ${copied ? "rgba(52,211,153,0.25)" : "var(--border)"}`,
             color: copied ? "#34d399" : "var(--muted-fg)", cursor: "pointer", transition: "all 0.15s",
           }}
@@ -60,7 +60,7 @@ function Card({ risk, index }) {
           <div style={{
             fontSize: "12px", lineHeight: 1.7, padding: "10px 12px", borderRadius: "6px",
             background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.12)",
-            color: "#a1a1aa", textDecoration: "line-through", fontStyle: "italic",
+            color: "var(--text-3)", textDecoration: "line-through", fontStyle: "italic",
           }}>
             {risk.clause_text}
           </div>
@@ -77,7 +77,7 @@ function Card({ risk, index }) {
           <div style={{
             fontSize: "12px", lineHeight: 1.7, padding: "10px 12px", borderRadius: "6px",
             background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.15)",
-            color: "#d4d4d8",
+            color: "var(--text-2)",
           }}>
             {risk.suggested_redline}
           </div>

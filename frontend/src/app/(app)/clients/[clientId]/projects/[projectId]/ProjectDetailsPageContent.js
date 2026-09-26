@@ -58,10 +58,10 @@ export default function ProjectDetailsPageContent({ client, project, documents =
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Link href={`/clients/${client.id}`} style={{
             width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center",
-            borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "8px", border: "1px solid var(--border)",
             transition: "background 0.15s", color: "var(--subtle-fg)"
           }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--surface-sm)"}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
           >
             <ArrowLeft size={16} />
@@ -70,9 +70,9 @@ export default function ProjectDetailsPageContent({ client, project, documents =
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--subtle-fg)", marginBottom: "4px" }}>
               <span>{client.name}</span>
               <ChevronRight size={12} />
-              <span style={{ color: "rgba(255,255,255,0.6)" }}>{project.name}</span>
+              <span style={{ color: "var(--text-2)" }}>{project.name}</span>
             </div>
-            <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#fafafa" }}>{project.name}</h1>
+            <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--fg)" }}>{project.name}</h1>
             {project.description && (
               <p style={{ fontSize: "14px", color: "var(--subtle-fg)", marginTop: "4px" }}>{project.description}</p>
             )}
@@ -99,17 +99,17 @@ export default function ProjectDetailsPageContent({ client, project, documents =
                 className={`fade-up delay-${Math.min(i + 1, 6)}`}
                 style={{
                   display: "flex", alignItems: "flex-start", gap: "16px",
-                  padding: "20px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)",
+                  padding: "20px", borderRadius: "12px", border: "1px solid var(--border)",
                   background: "var(--card)", textDecoration: "none", position: "relative",
                   overflow: "hidden", transition: "border-color 0.2s"
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+                  e.currentTarget.style.borderColor = "var(--border-hover)";
                   const chevron = e.currentTarget.querySelector(".chevron");
                   if (chevron) chevron.style.opacity = "0.4";
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
+                  e.currentTarget.style.borderColor = "var(--border)";
                   const chevron = e.currentTarget.querySelector(".chevron");
                   if (chevron) chevron.style.opacity = "0";
                 }}
@@ -133,7 +133,7 @@ export default function ProjectDetailsPageContent({ client, project, documents =
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
                     <div>
-                      <h3 style={{ fontSize: "14px", fontWeight: 600, color: "#fafafa", transition: "color 0.2s" }}>
+                      <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--fg)", transition: "color 0.2s" }}>
                         {doc.title}
                       </h3>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px" }}>

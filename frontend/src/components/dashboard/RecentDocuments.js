@@ -34,7 +34,7 @@ export default function RecentDocuments({ documents }) {
         padding: "16px 20px", borderBottom: "1px solid var(--border)",
       }}>
         <div>
-          <div style={{ fontSize: "14px", fontWeight: 600, color: "#e4e4e7" }}>Recent Documents</div>
+          <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-1)" }}>Recent Documents</div>
           <div style={{ fontSize: "12px", color: "var(--subtle-fg)", marginTop: "2px" }}>Last analyzed contracts</div>
         </div>
         <Link href="/clients" style={{
@@ -78,12 +78,12 @@ export default function RecentDocuments({ documents }) {
                   <tr key={doc.id}>
                     <td>
                       <Link href={href} style={{
-                        fontSize: "13px", fontWeight: 500, color: "#d4d4d8",
+                        fontSize: "13px", fontWeight: 500, color: "var(--text-2)",
                         textDecoration: "none", display: "flex", alignItems: "center", gap: "6px",
                         transition: "color 0.12s",
                       }}
                         onMouseEnter={e => e.currentTarget.style.color = "#c4b5fd"}
-                        onMouseLeave={e => e.currentTarget.style.color = "#d4d4d8"}
+                        onMouseLeave={e => e.currentTarget.style.color = "var(--text-2)"}
                       >
                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "220px" }}>
                           {doc.title}

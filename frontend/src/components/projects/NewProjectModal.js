@@ -39,7 +39,7 @@ export default function NewProjectModal({ clientId, onClose }) {
           padding: "16px 20px", borderBottom: "1px solid var(--border)",
           display: "flex", justifyContent: "space-between", alignItems: "center"
         }}>
-          <h2 style={{ fontSize: "16px", fontWeight: 600, color: "#fafafa" }}>New Project</h2>
+          <h2 style={{ fontSize: "16px", fontWeight: 600, color: "var(--fg)" }}>New Project</h2>
           <button onClick={onClose} style={{
             background: "transparent", border: "none", color: "var(--subtle-fg)", cursor: "pointer"
           }}>

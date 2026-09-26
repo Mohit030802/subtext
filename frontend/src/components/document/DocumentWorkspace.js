@@ -76,7 +76,7 @@ export default function DocumentWorkspace({ document: doc, clientId, projectId }
             border: "1px solid var(--border)", color: "var(--muted-fg)",
             textDecoration: "none", flexShrink: 0, transition: "all 0.12s",
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#e4e4e7"; }}
+          onMouseEnter={e => { e.currentTarget.style.background = "var(--surface-sm)"; e.currentTarget.style.color = "var(--text-1)"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--muted-fg)"; }}
         >
           <ChevronLeft size={14} />
@@ -86,13 +86,13 @@ export default function DocumentWorkspace({ document: doc, clientId, projectId }
 
         <FileText size={14} color="var(--muted-fg)" style={{ flexShrink: 0 }} />
         <span style={{
-          fontSize: "13px", fontWeight: 600, color: "#e4e4e7",
+          fontSize: "13px", fontWeight: 600, color: "var(--text-1)",
           flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
         }}>{doc.title}</span>
 
         <span style={{
           fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "4px",
-          fontFamily: "var(--font-mono)", background: "rgba(255,255,255,0.05)", color: "#71717a",
+          fontFamily: "var(--font-mono)", background: "var(--surface-sm)", color: "var(--muted-fg)",
         }}>{doc.doc_type || "OTHER"}</span>
 
         {riskCfg && (
@@ -166,13 +166,13 @@ export default function DocumentWorkspace({ document: doc, clientId, projectId }
                       style={{
                         display: "flex", alignItems: "center", gap: "6px",
                         padding: "12px 16px", fontSize: "12px", fontWeight: 500,
-                        color: active ? "#e4e4e7" : "var(--muted-fg)",
+                        color: active ? "var(--text-1)" : "var(--muted-fg)",
                         background: "transparent", border: "none",
                         borderBottom: active ? "2px solid #7c3aed" : "2px solid transparent",
                         cursor: "pointer", whiteSpace: "nowrap",
                         transition: "all 0.12s",
                       }}
-                      onMouseEnter={e => { if (!active) e.currentTarget.style.color = "#d4d4d8"; }}
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.color = "var(--text-2)"; }}
                       onMouseLeave={e => { if (!active) e.currentTarget.style.color = "var(--muted-fg)"; }}
                     >
                       <Icon size={13} />

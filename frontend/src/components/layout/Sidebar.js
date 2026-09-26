@@ -27,11 +27,11 @@ function DocNode({ doc, clientId, projectId }) {
         display: "flex", alignItems: "center", gap: "6px",
         padding: "5px 8px 5px 10px", borderRadius: "5px",
         fontSize: "12px",
-        color: active ? "#e4e4e7" : "var(--sidebar-fg)",
+        color: active ? "var(--text-1)" : "var(--sidebar-fg)",
         background: active ? "var(--sidebar-accent)" : "transparent",
         textDecoration: "none", transition: "all 0.12s", position: "relative",
       }}
-      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--surface-sm)"; }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
     >
       {active && (
@@ -68,7 +68,7 @@ function ProjectNode({ project, clientId }) {
           fontSize: "12px", color: "var(--sidebar-fg)", background: "transparent",
           border: "none", cursor: "pointer", transition: "all 0.12s", textAlign: "left",
         }}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+        onMouseEnter={e => e.currentTarget.style.background = "var(--surface-sm)"}
         onMouseLeave={e => e.currentTarget.style.background = "transparent"}
       >
         {hasDocs
@@ -101,11 +101,11 @@ function ClientNode({ client }) {
         style={{
           display: "flex", alignItems: "center", gap: "6px",
           width: "100%", padding: "6px 8px", borderRadius: "6px",
-          fontSize: "12px", fontWeight: 500, color: "#a1a1aa",
+          fontSize: "12px", fontWeight: 500, color: "var(--text-3)",
           background: "transparent", border: "none", cursor: "pointer",
           transition: "all 0.12s", textAlign: "left",
         }}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+        onMouseEnter={e => e.currentTarget.style.background = "var(--surface-sm)"}
         onMouseLeave={e => e.currentTarget.style.background = "transparent"}
       >
         <ChevronDown size={11} style={{
@@ -164,7 +164,7 @@ export default function Sidebar({ navTree = [] }) {
           <Zap size={14} color="#fff" fill="#fff" />
         </div>
         <div>
-          <div style={{ fontSize: "14px", fontWeight: 700, color: "#fafafa", lineHeight: 1 }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg)", lineHeight: 1 }}>
             Subtext
           </div>
           <div style={{ fontSize: "10px", color: "var(--subtle-fg)", marginTop: "3px", letterSpacing: "0.02em" }}>
@@ -237,11 +237,11 @@ export default function Sidebar({ navTree = [] }) {
             display: "flex", alignItems: "center", gap: "6px",
             width: "100%", marginTop: "8px", padding: "6px 8px", borderRadius: "6px",
             fontSize: "12px", color: "var(--subtle-fg)", background: "transparent",
-            border: "1px dashed rgba(255,255,255,0.08)", cursor: "pointer",
+            border: "1px dashed var(--border)", cursor: "pointer",
             transition: "all 0.12s", textDecoration: "none",
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "var(--sidebar-fg)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--sidebar-fg)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
         >
           <Plus size={12} />
           Add Client
@@ -272,7 +272,7 @@ export default function Sidebar({ navTree = [] }) {
           )}
 
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: "12px", fontWeight: 600, color: "#e4e4e7", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-1)", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {user?.name || "User"}
             </div>
             <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -286,12 +286,12 @@ export default function Sidebar({ navTree = [] }) {
             style={{
               width: "26px", height: "26px", borderRadius: "6px",
               display: "flex", alignItems: "center", justifyContent: "center",
-              background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
+              background: "transparent", border: "1px solid var(--border)",
               cursor: "pointer", flexShrink: 0, transition: "all 0.12s",
               color: "var(--subtle-fg)",
             }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(248,113,113,0.08)"; e.currentTarget.style.borderColor = "rgba(248,113,113,0.2)"; e.currentTarget.style.color = "#f87171"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--subtle-fg)"; }}
           >
             <LogOut size={13} />
           </button>

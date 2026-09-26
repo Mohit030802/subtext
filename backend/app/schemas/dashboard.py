@@ -13,6 +13,8 @@ class DashboardStats(BaseModel):
 
 class RecentDocument(BaseModel):
     id: uuid.UUID
+    project_id: uuid.UUID
+    client_id: uuid.UUID
     title: str
     doc_type: str
     risk_score: Optional[str] = None
@@ -26,6 +28,9 @@ class RecentDocument(BaseModel):
 
 class UpcomingObligation(BaseModel):
     id: uuid.UUID
+    document_id: uuid.UUID
+    project_id: uuid.UUID
+    client_id: uuid.UUID
     title: str
     due_date: Optional[date] = None
     obligation_type: Optional[str] = None

@@ -28,20 +28,20 @@ export default function ClientDetailsPageContent({ client, projects = [], hasErr
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Link href="/clients" style={{
             width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center",
-            borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "8px", border: "1px solid var(--border)",
             transition: "background 0.15s", color: "var(--subtle-fg)"
           }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--surface-sm)"}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
           >
             <ArrowLeft size={16} />
           </Link>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#fafafa" }}>{client.name}</h1>
+              <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--fg)" }}>{client.name}</h1>
               <span style={{
                 fontSize: "10px", padding: "2px 8px", borderRadius: "99px",
-                background: "rgba(255,255,255,0.06)", color: "var(--subtle-fg)"
+                background: "var(--surface-md)", color: "var(--subtle-fg)"
               }}>
                 {client.industry || "Other"}
               </span>
@@ -71,12 +71,12 @@ export default function ClientDetailsPageContent({ client, projects = [], hasErr
               href={`/clients/${client.id}/projects/${project.id}`}
               className={`fade-up delay-${Math.min(i + 1, 6)}`}
               style={{
-                position: "relative", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)",
+                position: "relative", borderRadius: "12px", border: "1px solid var(--border)",
                 padding: "20px", overflow: "hidden", transition: "all 0.2s",
                 background: "var(--card)", textDecoration: "none", display: "block"
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+                e.currentTarget.style.borderColor = "var(--border-hover)";
                 const chevron = e.currentTarget.querySelector(".chevron");
                 if (chevron) chevron.style.opacity = "0.4";
               }}
@@ -98,7 +98,7 @@ export default function ClientDetailsPageContent({ client, projects = [], hasErr
                   <ChevronRight className="chevron" size={16} color="var(--subtle-fg)" style={{ opacity: 0, transition: "opacity 0.2s" }} />
                 </div>
 
-                <h3 style={{ fontSize: "14px", fontWeight: 600, color: "#fafafa", marginBottom: "4px", transition: "color 0.2s" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--fg)", marginBottom: "4px", transition: "color 0.2s" }}>
                   {project.name}
                 </h3>
                 {project.description && (

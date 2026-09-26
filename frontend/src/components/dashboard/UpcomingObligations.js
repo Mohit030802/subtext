@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { formatDate } from "@/lib/utils";
-import { CalendarPlus, CalendarCheck, Calendar } from "lucide-react";
+import { CalendarPlus, CalendarCheck, Calendar, ArrowUpRight } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
 
 const STATUS = {
@@ -35,16 +36,16 @@ export default function UpcomingObligations({ obligations }) {
         padding: "16px 20px", borderBottom: "1px solid var(--border)",
       }}>
         <div>
-          <div style={{ fontSize: "14px", fontWeight: 600, color: "#e4e4e7" }}>Upcoming Obligations</div>
+          <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-1)" }}>Upcoming Obligations</div>
           <div style={{ fontSize: "12px", color: "var(--subtle-fg)", marginTop: "2px" }}>Deadlines & deliverables</div>
         </div>
         <button style={{
           display: "flex", alignItems: "center", gap: "6px",
           padding: "5px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500,
-          color: "var(--muted-fg)", background: "rgba(255,255,255,0.03)",
+          color: "var(--muted-fg)", background: "var(--surface-xs)",
           border: "1px solid var(--border)", cursor: "pointer", transition: "all 0.12s",
         }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "#e4e4e7"; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--text-1)"; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--muted-fg)"; }}
         >
           <CalendarPlus size={13} />
@@ -78,15 +79,39 @@ export default function UpcomingObligations({ obligations }) {
                 const st = STATUS[obl.status] || STATUS.PENDING;
                 const typeLabel = OBL_TYPE[obl.obligation_type] || "Other";
                 const isOverdue = obl.status === "OVERDUE";
+                const docHref = obl.client_id && obl.project_id && obl.document_id
+                  ? `/clients/${obl.client_id}/projects/${obl.project_id}/documents/${obl.document_id}`
+                  : null;
                 return (
                   <tr key={obl.id}>
                     <td>
-                      <div style={{ fontSize: "13px", fontWeight: 500, color: "#d4d4d8" }}>{obl.title}</div>
-                      <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "2px" }}>{obl.document_title || "Unknown Document"}</div>
+                      {docHref ? (
+                        <Link href={docHref} style={{ textDecoration: "none" }}>
+                          <div style={{
+                            fontSize: "13px", fontWeight: 500, color: "var(--text-2)",
+                            display: "flex", alignItems: "center", gap: "4px",
+                            transition: "color 0.12s",
+                          }}
+                            onMouseEnter={e => e.currentTarget.style.color = "#c4b5fd"}
+                            onMouseLeave={e => e.currentTarget.style.color = "var(--text-2)"}
+                          >
+                            {obl.title}
+                            <ArrowUpRight size={11} style={{ opacity: 0.4, flexShrink: 0 }} />
+                          </div>
+                          <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "2px" }}>
+                            {obl.document_title || "Unknown Document"}
+                          </div>
+                        </Link>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-2)" }}>{obl.title}</div>
+                          <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "2px" }}>{obl.document_title || "Unknown Document"}</div>
+                        </>
+                      )}
                     </td>
                     <td style={{ fontSize: "12px", color: "var(--muted-fg)", whiteSpace: "nowrap" }}>{obl.client_name || "Unknown"}</td>
                     <td style={{ whiteSpace: "nowrap" }}>
-                      <span style={{ fontSize: "12px", fontWeight: isOverdue ? 600 : 400, color: isOverdue ? "#f87171" : "#a1a1aa" }}>
+                      <span style={{ fontSize: "12px", fontWeight: isOverdue ? 600 : 400, color: isOverdue ? "#f87171" : "var(--text-3)" }}>
                         {formatDate(obl.due_date)}
                       </span>
                     </td>
@@ -94,7 +119,7 @@ export default function UpcomingObligations({ obligations }) {
                       <span style={{
                         display: "inline-block", padding: "2px 7px", borderRadius: "4px",
                         fontSize: "11px", fontWeight: 500,
-                        background: "rgba(255,255,255,0.04)", color: "var(--muted-fg)",
+                        background: "var(--surface-sm)", color: "var(--muted-fg)",
                       }}>{typeLabel}</span>
                     </td>
                     <td>
@@ -110,7 +135,7 @@ export default function UpcomingObligations({ obligations }) {
                             onMouseEnter={e => e.currentTarget.style.opacity = "0.7"}
                             onMouseLeave={e => e.currentTarget.style.opacity = "0.25"}
                           >
-                            <CalendarPlus size={14} color="#a1a1aa" />
+                            <CalendarPlus size={14} color="var(--text-3)" />
                           </button>
                       }
                     </td>

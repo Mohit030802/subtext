@@ -123,12 +123,12 @@ export default function ProcessDocumentPanel({ documentId, initialStatus }) {
       </div>
 
       {/* Headline */}
-      <div style={{ fontSize: "15px", fontWeight: 700, color: "#e4e4e7", marginBottom: "8px" }}>
+      <div style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-1)", marginBottom: "8px" }}>
         {isProcessing ? "Analyzing document…" : isFailed ? "Analysis failed" : "Ready to analyze"}
       </div>
 
       {/* Sub-text */}
-      <div style={{ fontSize: "13px", color: "#71717a", lineHeight: 1.6, maxWidth: "280px", marginBottom: "28px" }}>
+      <div style={{ fontSize: "13px", color: "var(--muted-fg)", lineHeight: 1.6, maxWidth: "280px", marginBottom: "28px" }}>
         {isProcessing
           ? "Gemini AI is reading through the contract. This takes 20–40 seconds. The page will refresh automatically."
           : isFailed
@@ -149,7 +149,7 @@ export default function ProcessDocumentPanel({ documentId, initialStatus }) {
             "Suggest redline rewrites",
             "Build a contract summary",
           ].map((feat) => (
-            <div key={feat} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#a1a1aa" }}>
+            <div key={feat} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--text-3)" }}>
               <CheckCircle2 size={13} color="#34d399" style={{ flexShrink: 0 }} />
               {feat}
             </div>
@@ -190,11 +190,11 @@ export default function ProcessDocumentPanel({ documentId, initialStatus }) {
           style={{
             display: "inline-flex", alignItems: "center", gap: "6px",
             padding: "8px 16px", borderRadius: "8px", fontSize: "12px",
-            background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
-            color: "#71717a", cursor: "pointer", fontFamily: "inherit",
+            background: "transparent", border: "1px solid var(--border)",
+            color: "var(--muted-fg)", cursor: "pointer", fontFamily: "inherit",
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "#a1a1aa"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#71717a"; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--text-3)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--muted-fg)"; }}
         >
           <RotateCcw size={12} />
           Refresh now

@@ -39,7 +39,7 @@ export default function NewClientModal({ onClose }) {
           padding: "16px 20px", borderBottom: "1px solid var(--border)",
           display: "flex", justifyContent: "space-between", alignItems: "center"
         }}>
-          <h2 style={{ fontSize: "16px", fontWeight: 600, color: "#fafafa" }}>New Client</h2>
+          <h2 style={{ fontSize: "16px", fontWeight: 600, color: "var(--fg)" }}>New Client</h2>
           <button onClick={onClose} style={{
             background: "transparent", border: "none", color: "var(--subtle-fg)", cursor: "pointer"
           }}>
@@ -57,7 +57,7 @@ export default function NewClientModal({ onClose }) {
               style={{
                 width: "100%", padding: "10px", borderRadius: "6px",
                 background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--border)",
-                color: "#fafafa", fontSize: "14px", outline: "none"
+                color: "var(--fg)", fontSize: "14px", outline: "none"
               }}
               onFocus={e => e.target.style.borderColor = "var(--primary)"}
               onBlur={e => e.target.style.borderColor = "var(--border)"}
@@ -73,14 +73,14 @@ export default function NewClientModal({ onClose }) {
               style={{
                 width: "100%", padding: "10px", borderRadius: "6px",
                 background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--border)",
-                color: "#fafafa", fontSize: "14px", outline: "none", appearance: "none"
+                color: "var(--fg)", fontSize: "14px", outline: "none", appearance: "none"
               }}
               onFocus={e => e.target.style.borderColor = "var(--primary)"}
               onBlur={e => e.target.style.borderColor = "var(--border)"}
             >
-              <option value="" style={{ background: "var(--card)", color: "#fafafa" }}>Select industry...</option>
+              <option value="" style={{ background: "var(--card)", color: "var(--fg)" }}>Select industry...</option>
               {["Healthcare", "Finance", "Technology", "Real Estate", "Legal", "Other"].map(ind => (
-                <option key={ind} value={ind} style={{ background: "var(--card)", color: "#fafafa" }}>{ind}</option>
+                <option key={ind} value={ind} style={{ background: "var(--card)", color: "var(--fg)" }}>{ind}</option>
               ))}
             </select>
           </div>
@@ -94,7 +94,7 @@ export default function NewClientModal({ onClose }) {
               style={{
                 width: "100%", padding: "10px", borderRadius: "6px",
                 background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--border)",
-                color: "#fafafa", fontSize: "14px", outline: "none"
+                color: "var(--fg)", fontSize: "14px", outline: "none"
               }}
               onFocus={e => e.target.style.borderColor = "var(--primary)"}
               onBlur={e => e.target.style.borderColor = "var(--border)"}
@@ -110,7 +110,7 @@ export default function NewClientModal({ onClose }) {
               style={{
                 width: "100%", padding: "10px", borderRadius: "6px",
                 background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--border)",
-                color: "#fafafa", fontSize: "14px", outline: "none"
+                color: "var(--fg)", fontSize: "14px", outline: "none"
               }}
               onFocus={e => e.target.style.borderColor = "var(--primary)"}
               onBlur={e => e.target.style.borderColor = "var(--border)"}
@@ -122,7 +122,7 @@ export default function NewClientModal({ onClose }) {
               type="button" onClick={onClose}
               style={{
                 padding: "8px 16px", borderRadius: "6px", fontSize: "13px", fontWeight: 500,
-                background: "transparent", color: "#fafafa", border: "1px solid var(--border)",
+                background: "transparent", color: "var(--fg)", border: "1px solid var(--border)",
                 cursor: "pointer"
               }}
             >
