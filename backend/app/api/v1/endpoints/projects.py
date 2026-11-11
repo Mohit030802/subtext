@@ -36,7 +36,7 @@ async def get_projects(
     
     document_count_stmt = (
         select(func.count(Document.id))
-        .where(Document.project_id == Project.id)
+        .where(Document.project_id == Project.id, Document.is_latest.is_(True))
         .scalar_subquery()
     )
     
@@ -89,7 +89,7 @@ async def get_project(
     
     document_count_stmt = (
         select(func.count(Document.id))
-        .where(Document.project_id == project_id)
+        .where(Document.project_id == project_id, Document.is_latest.is_(True))
         .scalar_subquery()
     )
     

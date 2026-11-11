@@ -107,6 +107,10 @@ CREATE INDEX IF NOT EXISTS idx_projects_status    ON projects (status);
 CREATE TABLE IF NOT EXISTS documents (
     id               UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id       UUID          NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
+    document_family_id UUID        NOT NULL DEFAULT gen_random_uuid(),
+    version_number   INTEGER       NOT NULL DEFAULT 1,
+    is_latest        BOOLEAN       NOT NULL DEFAULT TRUE,
+    previous_version_id UUID        REFERENCES documents (id) ON DELETE SET NULL,
 
     -- File metadata
     title            VARCHAR(500)  NOT NULL,
@@ -148,6 +152,9 @@ COMMENT ON COLUMN documents.summary    IS 'JSONB: key_takeaways, core_obligation
 COMMENT ON COLUMN documents.raw_text   IS 'Full text extracted via PyMuPDF / Tesseract OCR';
 
 CREATE INDEX IF NOT EXISTS idx_documents_project_id  ON documents (project_id);
+CREATE INDEX IF NOT EXISTS idx_documents_family_id   ON documents (document_family_id);
+CREATE INDEX IF NOT EXISTS idx_documents_is_latest   ON documents (is_latest);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_documents_family_version ON documents (document_family_id, version_number);
 CREATE INDEX IF NOT EXISTS idx_documents_status       ON documents (status);
 CREATE INDEX IF NOT EXISTS idx_documents_risk_score   ON documents (risk_score);
 CREATE INDEX IF NOT EXISTS idx_documents_doc_type     ON documents (doc_type);

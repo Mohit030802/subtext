@@ -8,6 +8,7 @@ import ObligationsTab from "./ObligationsTab";
 import RedlinesTab from "./RedlinesTab";
 import VaultChat from "./VaultChat";
 import ProcessDocumentPanel from "./ProcessDocumentPanel";
+import DriveImportButton from "./DriveImportButton";
 
 const TABS = [
   { id: "risks",       label: "Traps & Risks", icon: AlertTriangle },
@@ -22,7 +23,7 @@ const RISK_COLORS = {
   LOW:    { color: "#34d399", bg: "rgba(52,211,153,0.08)",  border: "rgba(52,211,153,0.2)"   },
 };
 
-export default function DocumentWorkspace({ document: doc, clientId, projectId }) {
+export default function DocumentWorkspace({ document: doc, versions = [], clientId, projectId }) {
   const [activeTab, setActiveTab] = useState("risks");
   const [splitPct, setSplitPct] = useState(52);
   const containerRef = useRef(null);
@@ -104,7 +105,29 @@ export default function DocumentWorkspace({ document: doc, clientId, projectId }
             {doc.risk_score} RISK
           </span>
         )}
+
+        <DriveImportButton
+          projectId={projectId}
+          clientId={clientId}
+          documentId={doc.id}
+        />
       </div>
+
+      {versions.length > 1 && (
+        <div style={{ display: "flex", gap: "4px", padding: "6px 16px", background: "var(--surface)", borderBottom: "1px solid var(--border)", overflowX: "auto" }}>
+          {versions.map((version) => {
+            const active = version.version_number === doc.version_number;
+            const href = version.is_latest
+              ? `/clients/${clientId}/projects/${projectId}/documents/${doc.document_family_id}`
+              : `/clients/${clientId}/projects/${projectId}/documents/${doc.document_family_id}?version=${version.version_number}`;
+            return (
+              <Link key={version.id} href={href} style={{ padding: "5px 9px", borderRadius: "5px", textDecoration: "none", whiteSpace: "nowrap", fontSize: "11px", fontWeight: active ? 700 : 500, color: active ? "#c4b5fd" : "var(--muted-fg)", background: active ? "rgba(124,58,237,0.16)" : "transparent", border: active ? "1px solid rgba(124,58,237,0.3)" : "1px solid var(--border)" }}>
+                Version {version.version_number}{version.is_latest ? " · Latest" : ""}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── Split View ── */}
       <div ref={containerRef} style={{ flex: 1, display: "flex", overflow: "hidden" }}>

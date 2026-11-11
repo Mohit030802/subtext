@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import List, TYPE_CHECKING, Any
-from sqlalchemy import String, ForeignKey, Integer, JSON, text
+from sqlalchemy import String, ForeignKey, Integer, Boolean, JSON, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
@@ -18,6 +18,10 @@ class Document(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     project_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    document_family_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), index=True)
+    version_number: Mapped[int] = mapped_column(Integer, server_default="1")
+    is_latest: Mapped[bool] = mapped_column(Boolean, server_default=text("true"), index=True)
+    previous_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL"))
     title: Mapped[str] = mapped_column(String(500))
     doc_type: Mapped[str] = mapped_column(String(50), server_default="OTHER")
     google_drive_file_id: Mapped[str | None] = mapped_column(String(255))

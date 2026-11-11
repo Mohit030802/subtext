@@ -25,6 +25,10 @@ class DocumentCreate(DocumentBase):
 class DocumentOut(DocumentBase):
     id: uuid.UUID
     project_id: uuid.UUID
+    document_family_id: uuid.UUID
+    version_number: int
+    is_latest: bool
+    previous_version_id: Optional[uuid.UUID] = None
     status: str
     risk_score: Optional[str] = None
     summary: Optional[dict[str, Any]] = None

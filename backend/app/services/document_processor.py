@@ -22,6 +22,7 @@ from google.genai import types as genai_types
 from docx import Document as DocxDocument
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
@@ -73,6 +74,9 @@ Rules:
 - If the text is too short or unclear to analyze, return minimal valid JSON
 
 Contract title: {title}
+
+Previous version metadata (use it to preserve facts that remain supported by the updated contract; correct or remove anything the updated contract changes):
+{previous_metadata}
 
 Contract text:
 {text}"""
@@ -129,10 +133,14 @@ def extract_text(content: bytes, mime_type: str) -> str:
 
 # ── Step 3: Analyze with Gemini ───────────────────────────────────────────────
 
-async def analyze_with_gemini(text: str, title: str) -> dict:
+async def analyze_with_gemini(text: str, title: str, previous_metadata: dict | None = None) -> dict:
     """Send contract text to Gemini, get back structured analysis."""
     truncated = text[:100_000]
-    prompt = ANALYSIS_PROMPT.format(title=title, text=truncated)
+    prompt = ANALYSIS_PROMPT.format(
+        title=title,
+        text=truncated,
+        previous_metadata=json.dumps(previous_metadata or {}, ensure_ascii=False)[:20_000],
+    )
 
     print(f"[processor] Calling Gemini model={GEMINI_MODEL}, text_len={len(truncated)}", flush=True)
 
@@ -239,7 +247,12 @@ async def process_document_background(document_id: str, drive_access_token: str)
     async with AsyncSessionLocal() as db:
         try:
             # Fetch document
-            result = await db.execute(select(Document).where(Document.id == uuid.UUID(document_id)))
+            result = await db.execute(
+                select(Document).options(
+                    selectinload(Document.clause_risks),
+                    selectinload(Document.obligations),
+                ).where(Document.id == uuid.UUID(document_id))
+            )
             doc = result.scalar_one_or_none()
 
             if not doc:
@@ -275,7 +288,29 @@ async def process_document_background(document_id: str, drive_access_token: str)
 
             # Step 3: Gemini analysis
             print(f"[processor] STEP 3: Sending to Gemini ({GEMINI_MODEL})...", flush=True)
-            analysis = await analyze_with_gemini(raw_text, doc.title)
+            previous_metadata = None
+            if doc.previous_version_id:
+                previous_result = await db.execute(
+                    select(Document).options(
+                        selectinload(Document.clause_risks),
+                        selectinload(Document.obligations),
+                    ).where(Document.id == doc.previous_version_id)
+                )
+                previous = previous_result.scalar_one_or_none()
+                if previous:
+                    previous_metadata = {
+                        "summary": previous.summary or {},
+                        "risk_score": previous.risk_score,
+                        "clause_risks": [
+                            {"clause_text": risk.clause_text, "risk_level": risk.risk_level, "explanation": risk.explanation}
+                            for risk in previous.clause_risks
+                        ],
+                        "obligations": [
+                            {"title": obligation.title, "description": obligation.description, "due_date": str(obligation.due_date) if obligation.due_date else None}
+                            for obligation in previous.obligations
+                        ],
+                    }
+            analysis = await analyze_with_gemini(raw_text, doc.title, previous_metadata)
             print(f"[processor] STEP 3: Analysis done | risk_score={analysis.get('risk_score')} | risks={len(analysis.get('clause_risks', []))} | obligations={len(analysis.get('obligations', []))}", flush=True)
 
             # Step 4: Persist
