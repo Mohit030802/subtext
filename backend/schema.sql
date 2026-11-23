@@ -60,6 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_users_google_id ON users (google_id);
 -- ============================================================
 CREATE TABLE IF NOT EXISTS clients (
     id             UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id        UUID          NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     name           VARCHAR(255)  NOT NULL,
     industry       VARCHAR(100),
     contact_name   VARCHAR(255),
@@ -72,7 +73,8 @@ CREATE TABLE IF NOT EXISTS clients (
 COMMENT ON TABLE  clients          IS 'Top-level client organisations';
 COMMENT ON COLUMN clients.industry IS 'e.g. Healthcare, Finance, Technology, Real Estate';
 
-CREATE INDEX IF NOT EXISTS idx_clients_name ON clients (name);
+CREATE INDEX IF NOT EXISTS idx_clients_user_id ON clients (user_id);
+CREATE INDEX IF NOT EXISTS idx_clients_name    ON clients (name);
 
 
 -- ============================================================
@@ -116,6 +118,9 @@ CREATE TABLE IF NOT EXISTS documents (
     title            VARCHAR(500)  NOT NULL,
     doc_type         VARCHAR(50)   NOT NULL DEFAULT 'OTHER'
                                    CHECK (doc_type IN ('NDA','MSA','SOW','SLA','HIRING','OTHER')),
+    google_drive_file_id   VARCHAR(255),
+    google_drive_view_url  VARCHAR(500),
+    google_drive_mime_type VARCHAR(100),
     file_path        VARCHAR(1000),
     file_name        VARCHAR(500),
     file_size_bytes  BIGINT,
