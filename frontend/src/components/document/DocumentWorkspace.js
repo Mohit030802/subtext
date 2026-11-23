@@ -10,6 +10,7 @@ import VaultChat from "./VaultChat";
 import ProcessDocumentPanel from "./ProcessDocumentPanel";
 import DriveImportButton from "./DriveImportButton";
 import SyncObligationsModal from "./SyncObligationsModal";
+import DocumentReader from "./DocumentReader";
 
 const TABS = [
   { id: "risks",       label: "Traps & Risks", icon: AlertTriangle },
@@ -50,9 +51,13 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
   const [activeRisk, setActiveRisk] = useState(null);
   const [targetPage, setTargetPage] = useState(null);
   const [iframeKey, setIframeKey] = useState(0);
+  const [viewMode, setViewMode] = useState(doc.raw_text ? "reader" : "preview");
 
   const scrollToClause = (risk) => {
     setActiveRisk(risk);
+    if (doc.raw_text) {
+      setViewMode("reader");
+    }
     if (risk?.page_number) {
       setTargetPage(risk.page_number);
       setIframeKey(k => k + 1);
@@ -182,10 +187,40 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
             padding: "8px 14px", background: "var(--surface)", borderBottom: "1px solid var(--border)",
             flexShrink: 0, fontSize: "11px"
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--muted-fg)" }}>
-              <FileText size={13} />
-              <span>Document Viewer</span>
-              {targetPage && (
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              {/* View Switcher */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: "2px",
+                background: "var(--surface-sm)", padding: "2px", borderRadius: "6px",
+                border: "1px solid var(--border)"
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("preview")}
+                  style={{
+                    padding: "3px 9px", borderRadius: "4px", fontSize: "11px", fontWeight: 600,
+                    background: viewMode === "preview" ? "var(--primary)" : "transparent",
+                    color: viewMode === "preview" ? "#fff" : "var(--muted-fg)",
+                    border: "none", cursor: "pointer", transition: "all 0.12s"
+                  }}
+                >
+                  PDF Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("reader")}
+                  style={{
+                    padding: "3px 9px", borderRadius: "4px", fontSize: "11px", fontWeight: 600,
+                    background: viewMode === "reader" ? "var(--primary)" : "transparent",
+                    color: viewMode === "reader" ? "#fff" : "var(--muted-fg)",
+                    border: "none", cursor: "pointer", transition: "all 0.12s"
+                  }}
+                >
+                  Interactive Reader
+                </button>
+              </div>
+
+              {viewMode === "preview" && targetPage && (
                 <span style={{
                   background: "rgba(124, 58, 237, 0.15)", color: "#a78bfa",
                   padding: "1px 6px", borderRadius: "4px", fontWeight: 600
@@ -194,6 +229,7 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
                 </span>
               )}
             </div>
+
             {doc.google_drive_file_id && (
               <a
                 href={doc.google_drive_view_url || `https://drive.google.com/file/d/${doc.google_drive_file_id}/view`}
@@ -213,86 +249,97 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
             )}
           </div>
 
-          {/* Active Risk Banner */}
-          {activeRisk && (
-            <div style={{
-              padding: "10px 14px",
-              background: "var(--surface-sm)",
-              borderBottom: "1px solid var(--border)",
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: "12px",
-              flexShrink: 0
-            }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0, flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{
-                    fontSize: "9px", fontWeight: 700, padding: "2px 5px", borderRadius: "4px",
-                    background: activeRisk.risk_level === "HIGH" ? "rgba(248,113,113,0.15)" : "rgba(251,191,36,0.15)",
-                    color: activeRisk.risk_level === "HIGH" ? "#f87171" : "#fbbf24",
-                  }}>
-                    {activeRisk.risk_level} RISK
-                  </span>
-                  <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-1)" }}>
-                    Page {activeRisk.page_number || 1}
-                  </span>
-                </div>
-                <div style={{
-                  fontSize: "11px", color: "var(--text-2)", fontStyle: "italic", lineHeight: 1.4,
-                  overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
-                }}>
-                  "{activeRisk.clause_text}"
-                </div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(activeRisk.clause_text);
-                    alert("Clause copied to clipboard!");
-                  }}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "4px",
-                    fontSize: "11px", padding: "4px 8px", borderRadius: "5px",
-                    background: "var(--surface)", border: "1px solid var(--border)",
-                    color: "var(--text-2)", cursor: "pointer"
-                  }}
-                  title="Copy clause text"
-                >
-                  <Copy size={11} />
-                  <span>Copy</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveRisk(null)}
-                  style={{
-                    background: "transparent", border: "none", color: "var(--subtle-fg)",
-                    cursor: "pointer", padding: "4px"
-                  }}
-                  title="Clear highlight"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {doc.google_drive_file_id ? (
-            <iframe 
-              key={iframeKey}
-              src={`https://drive.google.com/file/d/${doc.google_drive_file_id}/preview${targetPage ? `#page=${targetPage}` : ""}`} 
-              width="100%" 
-              height="100%" 
-              style={{ border: "none", flex: 1 }}
-              title={doc.title}
+          {viewMode === "reader" ? (
+            <DocumentReader
+              rawText={doc.raw_text}
+              clauseRisks={clauseRisks}
+              activeRiskId={activeRisk?.id}
+              onSelectRisk={scrollToClause}
             />
           ) : (
-            <div style={{ padding: "40px", textAlign: "center", color: "#666" }}>
-              Document viewer not available. No Google Drive file ID provided.
-            </div>
+            <>
+              {/* Active Risk Banner */}
+              {activeRisk && (
+                <div style={{
+                  padding: "10px 14px",
+                  background: "var(--surface-sm)",
+                  borderBottom: "1px solid var(--border)",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexShrink: 0
+                }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0, flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{
+                        fontSize: "9px", fontWeight: 700, padding: "2px 5px", borderRadius: "4px",
+                        background: activeRisk.risk_level === "HIGH" ? "rgba(248,113,113,0.15)" : "rgba(251,191,36,0.15)",
+                        color: activeRisk.risk_level === "HIGH" ? "#f87171" : "#fbbf24",
+                      }}>
+                        {activeRisk.risk_level} RISK
+                      </span>
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-1)" }}>
+                        Page {activeRisk.page_number || 1}
+                      </span>
+                    </div>
+                    <div style={{
+                      fontSize: "11px", color: "var(--text-2)", fontStyle: "italic", lineHeight: 1.4,
+                      overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
+                    }}>
+                      "{activeRisk.clause_text}"
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(activeRisk.clause_text);
+                        alert("Clause copied to clipboard!");
+                      }}
+                      style={{
+                        display: "flex", alignItems: "center", gap: "4px",
+                        fontSize: "11px", padding: "4px 8px", borderRadius: "5px",
+                        background: "var(--surface)", border: "1px solid var(--border)",
+                        color: "var(--text-2)", cursor: "pointer"
+                      }}
+                      title="Copy clause text"
+                    >
+                      <Copy size={11} />
+                      <span>Copy</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveRisk(null)}
+                      style={{
+                        background: "transparent", border: "none", color: "var(--subtle-fg)",
+                        cursor: "pointer", padding: "4px"
+                      }}
+                      title="Clear highlight"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {doc.google_drive_file_id ? (
+                <iframe 
+                  key={iframeKey}
+                  src={`https://drive.google.com/file/d/${doc.google_drive_file_id}/preview${targetPage ? `#page=${targetPage}` : ""}`} 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: "none", flex: 1 }}
+                  title={doc.title}
+                />
+              ) : (
+                <div style={{ padding: "40px", textAlign: "center", color: "#666" }}>
+                  Document viewer not available. No Google Drive file ID provided.
+                </div>
+              )}
+            </>
           )}
         </div>
 

@@ -32,6 +32,7 @@ class DocumentOut(DocumentBase):
     status: str
     risk_score: Optional[str] = None
     summary: Optional[dict[str, Any]] = None
+    raw_text: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     analyzed_at: Optional[datetime] = None
