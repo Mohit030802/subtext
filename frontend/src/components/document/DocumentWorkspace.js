@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, Clock, ArrowLeftRight, MessageSquare, ChevronLeft, FileText } from "lucide-react";
+import { AlertTriangle, Clock, ArrowLeftRight, MessageSquare, ChevronLeft, FileText, ExternalLink, Copy, X } from "lucide-react";
 import RisksTab from "./RisksTab";
 import ObligationsTab from "./ObligationsTab";
 import RedlinesTab from "./RedlinesTab";
@@ -47,8 +47,16 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
     window.addEventListener("mouseup", onUp);
   }, []);
 
-  const scrollToClause = (id) => {
-    // In iframe mode, we can't easily scroll inside Drive, but we keep the handler signature
+  const [activeRisk, setActiveRisk] = useState(null);
+  const [targetPage, setTargetPage] = useState(null);
+  const [iframeKey, setIframeKey] = useState(0);
+
+  const scrollToClause = (risk) => {
+    setActiveRisk(risk);
+    if (risk?.page_number) {
+      setTargetPage(risk.page_number);
+      setIframeKey(k => k + 1);
+    }
   };
 
   const riskCfg = doc.risk_score ? RISK_COLORS[doc.risk_score] : null;
@@ -166,14 +174,119 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
         <div style={{
           width: `${splitPct}%`, display: "flex", flexDirection: "column",
           borderRight: "1px solid var(--border)", overflow: "hidden",
-          background: "#fff"
+          background: "var(--bg)"
         }}>
+          {/* Document Viewer Header Bar */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "8px 14px", background: "var(--surface)", borderBottom: "1px solid var(--border)",
+            flexShrink: 0, fontSize: "11px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--muted-fg)" }}>
+              <FileText size={13} />
+              <span>Document Viewer</span>
+              {targetPage && (
+                <span style={{
+                  background: "rgba(124, 58, 237, 0.15)", color: "#a78bfa",
+                  padding: "1px 6px", borderRadius: "4px", fontWeight: 600
+                }}>
+                  Page {targetPage}
+                </span>
+              )}
+            </div>
+            {doc.google_drive_file_id && (
+              <a
+                href={doc.google_drive_view_url || `https://drive.google.com/file/d/${doc.google_drive_file_id}/view`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  color: "var(--muted-fg)", textDecoration: "none", fontSize: "11px",
+                  transition: "color 0.12s"
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "var(--text-1)"}
+                onMouseLeave={e => e.currentTarget.style.color = "var(--muted-fg)"}
+              >
+                <span>Open in Google Drive</span>
+                <ExternalLink size={11} />
+              </a>
+            )}
+          </div>
+
+          {/* Active Risk Banner */}
+          {activeRisk && (
+            <div style={{
+              padding: "10px 14px",
+              background: "var(--surface-sm)",
+              borderBottom: "1px solid var(--border)",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: "12px",
+              flexShrink: 0
+            }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0, flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{
+                    fontSize: "9px", fontWeight: 700, padding: "2px 5px", borderRadius: "4px",
+                    background: activeRisk.risk_level === "HIGH" ? "rgba(248,113,113,0.15)" : "rgba(251,191,36,0.15)",
+                    color: activeRisk.risk_level === "HIGH" ? "#f87171" : "#fbbf24",
+                  }}>
+                    {activeRisk.risk_level} RISK
+                  </span>
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-1)" }}>
+                    Page {activeRisk.page_number || 1}
+                  </span>
+                </div>
+                <div style={{
+                  fontSize: "11px", color: "var(--text-2)", fontStyle: "italic", lineHeight: 1.4,
+                  overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
+                }}>
+                  "{activeRisk.clause_text}"
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(activeRisk.clause_text);
+                    alert("Clause copied to clipboard!");
+                  }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "4px",
+                    fontSize: "11px", padding: "4px 8px", borderRadius: "5px",
+                    background: "var(--surface)", border: "1px solid var(--border)",
+                    color: "var(--text-2)", cursor: "pointer"
+                  }}
+                  title="Copy clause text"
+                >
+                  <Copy size={11} />
+                  <span>Copy</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveRisk(null)}
+                  style={{
+                    background: "transparent", border: "none", color: "var(--subtle-fg)",
+                    cursor: "pointer", padding: "4px"
+                  }}
+                  title="Clear highlight"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+
           {doc.google_drive_file_id ? (
             <iframe 
-              src={`https://drive.google.com/file/d/${doc.google_drive_file_id}/preview`} 
+              key={iframeKey}
+              src={`https://drive.google.com/file/d/${doc.google_drive_file_id}/preview${targetPage ? `#page=${targetPage}` : ""}`} 
               width="100%" 
               height="100%" 
-              style={{ border: "none" }}
+              style={{ border: "none", flex: 1 }}
               title={doc.title}
             />
           ) : (
@@ -245,7 +358,7 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
 
               {/* Tab Content */}
               <div style={{ flex: 1, overflowY: "auto" }}>
-                {activeTab === "risks"       && <RisksTab       clauseRisks={clauseRisks}  onScrollToClause={scrollToClause} />}
+                {activeTab === "risks"       && <RisksTab       clauseRisks={clauseRisks}  onScrollToClause={scrollToClause} activeRiskId={activeRisk?.id} />}
                 {activeTab === "obligations" && <ObligationsTab obligations={currentObligations} onObligationsUpdated={setCurrentObligations} />}
                 {activeTab === "redlines"    && <RedlinesTab    clauseRisks={clauseRisks}  />}
                 {activeTab === "chat"        && <VaultChat      messages={chatMessages}     documentTitle={doc.title} />}
