@@ -6,17 +6,14 @@ on:
 
 jobs:
   deploy-backend:
-    name: Deploy Backend → Railway
+    name: Deploy Backend → Render
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway
-        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --detach
-        working-directory: backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Trigger Render Deploy Hook
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "::warning ::RENDER_DEPLOY_HOOK_URL secret is not set in GitHub repository secrets. If Auto-Deploy is enabled in Render, it will deploy automatically via Git."
+            exit 0
+          fi
+          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

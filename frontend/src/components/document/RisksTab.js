@@ -8,7 +8,7 @@ const RISK = {
   LOW:    { color: "#34d399", bg: "rgba(52,211,153,0.08)",  border: "rgba(52,211,153,0.18)",  left: "#34d399" },
 };
 
-export default function RisksTab({ clauseRisks, onScrollToClause }) {
+export default function RisksTab({ clauseRisks, onScrollToClause, activeRiskId }) {
   const sorted = [...clauseRisks].sort((a, b) => {
     const o = { HIGH: 0, MEDIUM: 1, LOW: 2 };
     return (o[a.risk_level] ?? 9) - (o[b.risk_level] ?? 9);
@@ -26,6 +26,7 @@ export default function RisksTab({ clauseRisks, onScrollToClause }) {
     <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
       {sorted.map((risk, i) => {
         const cfg = RISK[risk.risk_level] || RISK.LOW;
+        const isViewing = activeRiskId === risk.id;
         return (
           <div
             key={risk.id}
@@ -33,37 +34,55 @@ export default function RisksTab({ clauseRisks, onScrollToClause }) {
             style={{
               animationDelay: `${i * 0.05}s`,
               background: "var(--card)",
-              border: `1px solid ${cfg.border}`,
-              borderLeft: `3px solid ${cfg.left}`,
+              border: isViewing ? "1px solid #7c3aed" : `1px solid ${cfg.border}`,
+              borderLeft: `3px solid ${isViewing ? "#7c3aed" : cfg.left}`,
               borderRadius: "8px",
+              boxShadow: isViewing ? "0 0 0 1px #7c3aed, 0 4px 14px rgba(124, 58, 237, 0.12)" : "none",
               overflow: "hidden",
+              transition: "all 0.15s ease",
             }}
           >
             {/* Card Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "10px 14px", borderBottom: "1px solid var(--border)",
-              background: cfg.bg,
+              background: isViewing ? "rgba(124, 58, 237, 0.08)" : cfg.bg,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span className="risk-pill" style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
                   <span className="risk-pill-dot" style={{ background: cfg.color }} />
                   {risk.risk_level}
                 </span>
-                <span style={{ fontSize: "11px", color: "var(--subtle-fg)" }}>Page {risk.page_number}</span>
+                <span style={{ fontSize: "11px", color: isViewing ? "#a78bfa" : "var(--subtle-fg)", fontWeight: isViewing ? 600 : 400 }}>
+                  Page {risk.page_number || 1}
+                </span>
               </div>
               <button
-                onClick={() => onScrollToClause(risk.id)}
+                type="button"
+                onClick={() => onScrollToClause(risk)}
                 style={{
                   display: "flex", alignItems: "center", gap: "5px",
-                  fontSize: "11px", fontWeight: 500, padding: "4px 9px", borderRadius: "5px",
-                  background: "var(--surface-sm)", border: "1px solid var(--border)",
-                  color: "var(--muted-fg)", cursor: "pointer", transition: "all 0.12s",
+                  fontSize: "11px", fontWeight: isViewing ? 600 : 500, padding: "4px 9px", borderRadius: "5px",
+                  background: isViewing ? "rgba(124, 58, 237, 0.2)" : "var(--surface-sm)",
+                  border: isViewing ? "1px solid #7c3aed" : "1px solid var(--border)",
+                  color: isViewing ? "#c4b5fd" : "var(--muted-fg)",
+                  cursor: "pointer", transition: "all 0.12s",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.color = "var(--text-1)"; e.currentTarget.style.borderColor = "var(--border-hover)"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "var(--muted-fg)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+                onMouseEnter={e => {
+                  if (!isViewing) {
+                    e.currentTarget.style.color = "var(--text-1)";
+                    e.currentTarget.style.borderColor = "var(--border-hover)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isViewing) {
+                    e.currentTarget.style.color = "var(--muted-fg)";
+                    e.currentTarget.style.borderColor = "var(--border)";
+                  }
+                }}
               >
-                <Eye size={12} /> View in doc
+                <Eye size={12} color={isViewing ? "#a78bfa" : "currentColor"} />
+                {isViewing ? "Viewing in doc ✓" : "View in doc"}
               </button>
             </div>
 
