@@ -10,7 +10,7 @@ import VaultChat from "./VaultChat";
 import ProcessDocumentPanel from "./ProcessDocumentPanel";
 import DriveImportButton from "./DriveImportButton";
 import SyncObligationsModal from "./SyncObligationsModal";
-import DocumentReader from "./DocumentReader";
+import PdfCanvasViewer from "./PdfCanvasViewer";
 
 const TABS = [
   { id: "risks",       label: "Traps & Risks", icon: AlertTriangle },
@@ -51,13 +51,11 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
   const [activeRisk, setActiveRisk] = useState(null);
   const [targetPage, setTargetPage] = useState(null);
   const [iframeKey, setIframeKey] = useState(0);
-  const [viewMode, setViewMode] = useState(doc.raw_text ? "reader" : "preview");
+  const [viewerMode, setViewerMode] = useState("native"); // "native" (PDF Canvas with Highlights) | "preview" (Drive Iframe)
 
   const scrollToClause = (risk) => {
     setActiveRisk(risk);
-    if (doc.raw_text) {
-      setViewMode("reader");
-    }
+    setViewerMode("native");
     if (risk?.page_number) {
       setTargetPage(risk.page_number);
       setIframeKey(k => k + 1);
@@ -196,31 +194,31 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
               }}>
                 <button
                   type="button"
-                  onClick={() => setViewMode("preview")}
+                  onClick={() => setViewerMode("native")}
                   style={{
                     padding: "3px 9px", borderRadius: "4px", fontSize: "11px", fontWeight: 600,
-                    background: viewMode === "preview" ? "var(--primary)" : "transparent",
-                    color: viewMode === "preview" ? "#fff" : "var(--muted-fg)",
+                    background: viewerMode === "native" ? "var(--primary)" : "transparent",
+                    color: viewerMode === "native" ? "#fff" : "var(--muted-fg)",
                     border: "none", cursor: "pointer", transition: "all 0.12s"
                   }}
                 >
-                  PDF Preview
+                  PDF (Highlights)
                 </button>
                 <button
                   type="button"
-                  onClick={() => setViewMode("reader")}
+                  onClick={() => setViewerMode("preview")}
                   style={{
                     padding: "3px 9px", borderRadius: "4px", fontSize: "11px", fontWeight: 600,
-                    background: viewMode === "reader" ? "var(--primary)" : "transparent",
-                    color: viewMode === "reader" ? "#fff" : "var(--muted-fg)",
+                    background: viewerMode === "preview" ? "var(--primary)" : "transparent",
+                    color: viewerMode === "preview" ? "#fff" : "var(--muted-fg)",
                     border: "none", cursor: "pointer", transition: "all 0.12s"
                   }}
                 >
-                  Interactive Reader
+                  Google Preview
                 </button>
               </div>
 
-              {viewMode === "preview" && targetPage && (
+              {viewerMode === "preview" && targetPage && (
                 <span style={{
                   background: "rgba(124, 58, 237, 0.15)", color: "#a78bfa",
                   padding: "1px 6px", borderRadius: "4px", fontWeight: 600
@@ -249,16 +247,17 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
             )}
           </div>
 
-          {viewMode === "reader" ? (
-            <DocumentReader
-              rawText={doc.raw_text}
+          {viewerMode === "native" ? (
+            <PdfCanvasViewer
+              document={doc}
               clauseRisks={clauseRisks}
-              activeRiskId={activeRisk?.id}
+              activeRisk={activeRisk}
               onSelectRisk={scrollToClause}
+              onSwitchToIframe={() => setViewerMode("preview")}
             />
           ) : (
             <>
-              {/* Active Risk Banner */}
+              {/* Active Risk Banner (when in Google Drive iframe mode) */}
               {activeRisk && (
                 <div style={{
                   padding: "10px 14px",

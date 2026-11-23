@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status, Header, Response
 from pydantic import BaseModel
 from typing import Annotated, List
 import uuid
@@ -112,6 +112,46 @@ async def get_document(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
         
     return document
+
+
+@router.get("/documents/{document_id}/pdf")
+async def get_document_pdf(
+    document_id: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db),
+    drive_token: str | None = Header(default=None, alias="X-Drive-Token"),
+):
+    requested = await verify_document_ownership(document_id, current_user.id, db)
+    if not requested.google_drive_file_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No Google Drive file linked to this document")
+    if not drive_token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing X-Drive-Token header")
+    
+    import httpx
+    headers = {"Authorization": f"Bearer {drive_token}"}
+    file_id = str(requested.google_drive_file_id)
+    mime_type = requested.google_drive_mime_type or ""
+    is_doc = "google-apps" in mime_type
+
+    media_url = f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media&supportsAllDrives=true"
+    export_url = f"https://www.googleapis.com/drive/v3/files/{file_id}/export?mimeType=application/pdf&supportsAllDrives=true"
+    primary = export_url if is_doc else media_url
+    secondary = media_url if is_doc else export_url
+
+    async with httpx.AsyncClient(timeout=45) as client:
+        r = await client.get(primary, headers=headers)
+        if r.status_code in (400, 404):
+            alt_r = await client.get(secondary, headers=headers)
+            if alt_r.status_code == 200:
+                r = alt_r
+        if r.status_code != 200:
+            raise HTTPException(status_code=r.status_code, detail=f"Google Drive returned {r.status_code}: {r.text[:200]}")
+        content = r.content
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{requested.title}.pdf"'}
+    )
 
 
 @router.get("/documents/{document_id}/versions", response_model=List[DocumentOut])
