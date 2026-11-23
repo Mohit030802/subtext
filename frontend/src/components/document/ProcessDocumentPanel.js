@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Zap, Loader2, AlertTriangle, CheckCircle2, RotateCcw } from "lucide-react";
 import { triggerProcessing } from "@/lib/actions";
-
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
+import { getGoogleAccessToken, DRIVE_SCOPE } from "@/lib/google-auth";
 
 const STATUS_META = {
   PENDING:    { label: "Not yet analyzed",       color: "#71717a" },
@@ -16,9 +15,9 @@ const STATUS_META = {
 
 export default function ProcessDocumentPanel({ documentId, initialStatus }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [phase, setPhase] = useState(initialStatus);
   const [loading, setLoading] = useState(false);
-  const tokenClientRef = useRef(null);
   const pollRef = useRef(null);
 
   // Sync with server-side status whenever the parent re-renders
@@ -37,16 +36,6 @@ export default function ProcessDocumentPanel({ documentId, initialStatus }) {
     return () => clearInterval(pollRef.current);
   }, []);
 
-  // Load GIS script once
-  useEffect(() => {
-    if (!document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
-      const s = document.createElement("script");
-      s.src = "https://accounts.google.com/gsi/client";
-      s.async = true;
-      document.body.appendChild(s);
-    }
-  }, []);
-
   const startPolling = () => {
     clearInterval(pollRef.current);
     pollRef.current = setInterval(() => {
@@ -57,33 +46,11 @@ export default function ProcessDocumentPanel({ documentId, initialStatus }) {
     setTimeout(() => clearInterval(pollRef.current), 3 * 60 * 1000);
   };
 
-  const getGISToken = () =>
-    new Promise((resolve, reject) => {
-      const init = () => {
-        if (!window.google?.accounts?.oauth2) {
-          setTimeout(init, 300);
-          return;
-        }
-        if (!tokenClientRef.current) {
-          tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CLIENT_ID,
-            scope: DRIVE_SCOPE,
-            callback: (res) => {
-              if (res.error) reject(new Error(res.error));
-              else resolve(res.access_token);
-            },
-          });
-        }
-        tokenClientRef.current.requestAccessToken({ prompt: "" });
-      };
-      init();
-    });
-
   const handleProcess = async () => {
     if (loading || phase === "PROCESSING") return;
     setLoading(true);
     try {
-      const token = await getGISToken();
+      const token = await getGoogleAccessToken(DRIVE_SCOPE, session?.user?.email);
       await triggerProcessing(documentId, token);
       setPhase("PROCESSING");
       startPolling();

@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { CalendarPlus, CalendarCheck, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { CalendarPlus, CalendarCheck, Loader2, Calendar } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import { markObligationCalendarSynced } from "@/lib/actions";
-
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
+import { syncSingleObligation, syncAllObligations } from "@/lib/google-calendar";
 
 const STATUS = {
   PENDING:   { label: "Pending",   color: "#60a5fa", bg: "rgba(96,165,250,0.1)"  },
@@ -20,68 +18,31 @@ const PARTY = {
   THIRD_PARTY: { label: "Third Party",  color: "#71717a", bg: "rgba(113,113,122,0.1)" },
 };
 
-export default function ObligationsTab({ obligations }) {
+export default function ObligationsTab({ obligations, onObligationsUpdated }) {
+  const { data: session } = useSession();
   const [syncedIds, setSyncedIds] = useState(() => new Set(
     obligations.filter((obligation) => obligation.is_synced_calendar).map((obligation) => obligation.id)
   ));
   const [syncingId, setSyncingId] = useState(null);
-  const tokenClientRef = useRef(null);
+  const [syncingAll, setSyncingAll] = useState(false);
 
   useEffect(() => {
-    if (document.querySelector('script[src*="accounts.google.com/gsi/client"]')) return;
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
-  }, []);
-
-  const getCalendarToken = () => new Promise((resolve, reject) => {
-    const requestToken = () => {
-      if (!window.google?.accounts?.oauth2) {
-        setTimeout(requestToken, 200);
-        return;
-      }
-      tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: CALENDAR_SCOPE,
-        callback: (response) => response.error
-          ? reject(new Error(response.error))
-          : resolve(response.access_token),
-      });
-      tokenClientRef.current.requestAccessToken({ prompt: "consent" });
-    };
-    requestToken();
-  });
+    setSyncedIds(new Set(
+      obligations.filter((obligation) => obligation.is_synced_calendar).map((obligation) => obligation.id)
+    ));
+  }, [obligations]);
 
   const addToCalendar = async (obligation) => {
-    if (!obligation.due_date || syncedIds.has(obligation.id) || syncingId) return;
+    if (!obligation.due_date || syncedIds.has(obligation.id) || syncingId || syncingAll) return;
     setSyncingId(obligation.id);
     try {
-      const accessToken = await getCalendarToken();
-      const startDate = obligation.due_date;
-      const endDate = new Date(`${startDate}T00:00:00Z`);
-      endDate.setUTCDate(endDate.getUTCDate() + 1);
-      const calendarResponse = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          summary: obligation.title,
-          description: obligation.description || "Obligation extracted by Subtext.",
-          start: { date: startDate },
-          end: { date: endDate.toISOString().slice(0, 10) },
-        }),
-      });
-      if (!calendarResponse.ok) {
-        const error = await calendarResponse.json().catch(() => ({}));
-        throw new Error(error.error?.message || "Google Calendar could not create the event");
-      }
-      const event = await calendarResponse.json();
-      await markObligationCalendarSynced(obligation.document_id, obligation.id, event.id);
+      await syncSingleObligation(obligation, session?.user?.email);
       setSyncedIds((current) => new Set([...current, obligation.id]));
+      if (onObligationsUpdated) {
+        onObligationsUpdated((prev) =>
+          prev.map((o) => (o.id === obligation.id ? { ...o, is_synced_calendar: true } : o))
+        );
+      }
     } catch (error) {
       console.error("Calendar sync failed:", error);
       alert(`Could not add this obligation to Google Calendar: ${error.message}`);
@@ -90,13 +51,82 @@ export default function ObligationsTab({ obligations }) {
     }
   };
 
+  const handleSyncAll = async () => {
+    const unsynced = obligations.filter((o) => o.due_date && !syncedIds.has(o.id));
+    if (!unsynced.length || syncingAll) return;
+    setSyncingAll(true);
+    try {
+      const result = await syncAllObligations(unsynced, session?.user?.email);
+      setSyncedIds((current) => new Set([...current, ...result.syncedIds]));
+      if (onObligationsUpdated) {
+        onObligationsUpdated((prev) =>
+          prev.map((o) => (result.syncedIds.includes(o.id) ? { ...o, is_synced_calendar: true } : o))
+        );
+      }
+    } catch (error) {
+      console.error("Batch sync failed:", error);
+      alert(`Could not sync all obligations: ${error.message}`);
+    } finally {
+      setSyncingAll(false);
+    }
+  };
+
   const sorted = [...obligations].sort((a,b) => new Date(a.due_date||0)-new Date(b.due_date||0));
+  const unsyncedCount = sorted.filter((o) => o.due_date && !syncedIds.has(o.id)).length;
 
   if (!sorted.length)
     return <div style={{ padding: "32px", textAlign: "center", color: "var(--subtle-fg)", fontSize: "13px" }}>No obligations found</div>;
 
   return (
-    <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+    <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+      {/* Header bar with Sync All option */}
+      {unsyncedCount > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "var(--surface-xs)",
+            border: "1px solid var(--border)",
+            borderRadius: "8px",
+            padding: "8px 12px",
+            fontSize: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--text-2)" }}>
+            <Calendar size={14} color="#a78bfa" />
+            <span>{unsyncedCount} obligation{unsyncedCount !== 1 ? "s" : ""} pending calendar sync</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleSyncAll}
+            disabled={syncingAll}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "5px 10px",
+              borderRadius: "6px",
+              background: "var(--primary)",
+              color: "#fff",
+              border: "none",
+              fontSize: "11px",
+              fontWeight: 600,
+              cursor: syncingAll ? "default" : "pointer",
+            }}
+          >
+            {syncingAll ? (
+              <>
+                <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                <span>Syncing…</span>
+              </>
+            ) : (
+              <span>Sync All to Calendar</span>
+            )}
+          </button>
+        </div>
+      )}
+
       {sorted.map((obl, i) => {
         const st = STATUS[obl.status]||STATUS.PENDING;
         const party = PARTY[obl.party_responsible]||PARTY.THIRD_PARTY;
@@ -124,24 +154,24 @@ export default function ObligationsTab({ obligations }) {
               <button
                 type="button"
                 onClick={() => addToCalendar(obl)}
-                disabled={!obl.due_date || isSynced || isSyncing}
+                disabled={!obl.due_date || isSynced || isSyncing || syncingAll}
                 title={!obl.due_date ? "This obligation has no due date" : isSynced ? "Added to Google Calendar" : "Add to Google Calendar"}
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "3px", background: "transparent", border: "none", cursor: !obl.due_date || isSynced || isSyncing ? "default" : "pointer", opacity: !obl.due_date ? 0.4 : 1 }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", background: "transparent", border: "none", cursor: !obl.due_date || isSynced || isSyncing ? "default" : "pointer", opacity: !obl.due_date ? 0.4 : 1 }}
               >
                 {isSyncing
-                  ? <Loader2 size={15} color="var(--muted-fg)" style={{ animation: "spin 1s linear infinite" }} />
+                  ? <Loader2 size={16} color="var(--muted-fg)" style={{ animation: "spin 1s linear infinite" }} />
                   : isSynced
-                  ? <CalendarCheck size={15} color="#34d399" />
-                  : <CalendarPlus size={15} color="var(--subtle-fg)" style={{ transition: "color 0.12s" }}
-                      onMouseEnter={e => e.currentTarget.style.color="var(--text-3)"}
+                  ? <CalendarCheck size={16} color="#34d399" />
+                  : <CalendarPlus size={16} color="var(--subtle-fg)" style={{ transition: "color 0.12s" }}
+                      onMouseEnter={e => e.currentTarget.style.color="var(--text-1)"}
                       onMouseLeave={e => e.currentTarget.style.color="var(--subtle-fg)"}
                     />
                 }
               </button>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px" }}>
-              <span style={{ fontSize: "12px", fontWeight: obl.status==="OVERDUE"?600:400, color: obl.status==="OVERDUE"?"#f87171":"var(--muted-fg)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: obl.due_date ? "var(--text-2)" : "var(--subtle-fg)" }}>
                 📅 {formatDate(obl.due_date)}
               </span>
               <span style={{ color: "var(--subtle-fg)" }}>·</span>
@@ -149,10 +179,9 @@ export default function ObligationsTab({ obligations }) {
                 {OBL_TYPE[obl.obligation_type]||"Other"}
               </span>
               <span className="risk-pill" style={{ background: st.bg, color: st.color }}>
-                <span className="risk-pill-dot" style={{ background: st.color }} />
                 {st.label}
               </span>
-              <span style={{ fontSize: "11px", padding: "2px 7px", borderRadius: "4px", background: party.bg, color: party.color }}>
+              <span className="risk-pill" style={{ background: party.bg, color: party.color }}>
                 {party.label}
               </span>
             </div>

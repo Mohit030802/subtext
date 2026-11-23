@@ -2,19 +2,18 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { importDocument, updateDocument } from "@/lib/actions";
 import { FolderOpen, Loader2 } from "lucide-react";
-
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+import { getGoogleAccessToken, DRIVE_SCOPE } from "@/lib/google-auth";
 
 export default function DriveImportButton({ projectId, documentId, clientId }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | auth | picker | importing
   const gisReady = useRef(false);
   const pickerReady = useRef(false);
-  const tokenClientRef = useRef(null);
 
   // Load Google Identity Services + Picker API once on mount
   useEffect(() => {
@@ -130,34 +129,22 @@ export default function DriveImportButton({ projectId, documentId, clientId }) {
       return;
     }
 
-    // Wait for Picker to be ready too
+    // Wait for Picker to be ready
     let pickerWaited = 0;
     while (!window.google?.picker && pickerWaited < 5000) {
       await new Promise(r => setTimeout(r, 200));
       pickerWaited += 200;
     }
 
-    // Initialize GIS token client (requests Drive scope via popup)
-    if (!tokenClientRef.current) {
-      tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: DRIVE_SCOPE,
-        callback: (response) => {
-          if (response.error) {
-            console.error("Drive auth error:", response.error);
-            alert(`Drive authorization failed: ${response.error}`);
-            setLoading(false);
-            setStatus("idle");
-            return;
-          }
-          // Got a Drive-scoped access token — open the picker
-          openPicker(response.access_token);
-        },
-      });
+    try {
+      const accessToken = await getGoogleAccessToken(DRIVE_SCOPE, session?.user?.email);
+      openPicker(accessToken);
+    } catch (err) {
+      console.error("Drive auth error:", err);
+      alert(`Drive authorization failed: ${err.message}`);
+      setLoading(false);
+      setStatus("idle");
     }
-
-    // Request token — shows popup if needed, instant if already authorized
-    tokenClientRef.current.requestAccessToken({ prompt: "" });
   };
 
   const buttonLabel = {

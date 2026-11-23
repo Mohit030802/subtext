@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, Clock, ArrowLeftRight, MessageSquare, ChevronLeft, FileText } from "lucide-react";
 import RisksTab from "./RisksTab";
@@ -9,6 +9,7 @@ import RedlinesTab from "./RedlinesTab";
 import VaultChat from "./VaultChat";
 import ProcessDocumentPanel from "./ProcessDocumentPanel";
 import DriveImportButton from "./DriveImportButton";
+import SyncObligationsModal from "./SyncObligationsModal";
 
 const TABS = [
   { id: "risks",       label: "Traps & Risks", icon: AlertTriangle },
@@ -52,9 +53,39 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
 
   const riskCfg = doc.risk_score ? RISK_COLORS[doc.risk_score] : null;
   const clauseRisks = doc.clause_risks || [];
-  const obligations = doc.obligations || [];
+  const [currentObligations, setCurrentObligations] = useState(doc.obligations || []);
+  const [showSyncPrompt, setShowSyncPrompt] = useState(false);
   const chatMessages = doc.chat_messages || []; // assuming empty for now
   const highCount = clauseRisks.filter(r => r.risk_level === "HIGH").length;
+
+  useEffect(() => {
+    setCurrentObligations(doc.obligations || []);
+  }, [doc.obligations]);
+
+  useEffect(() => {
+    if (doc.status === "ANALYZED" && currentObligations.some(o => o.due_date && !o.is_synced_calendar)) {
+      const prompted = typeof window !== "undefined" ? sessionStorage.getItem(`subtext_sync_prompted_${doc.id}`) : "true";
+      if (!prompted) {
+        setShowSyncPrompt(true);
+      }
+    }
+  }, [doc.status, doc.id, currentObligations]);
+
+  const handleDismissPrompt = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(`subtext_sync_prompted_${doc.id}`, "true");
+    }
+    setShowSyncPrompt(false);
+  };
+
+  const handleSyncComplete = (syncedIds) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(`subtext_sync_prompted_${doc.id}`, "true");
+    }
+    setCurrentObligations(prev =>
+      prev.map(o => (syncedIds.includes(o.id) ? { ...o, is_synced_calendar: true } : o))
+    );
+  };
 
   return (
     /* Full-viewport layout: fixed overlay over main content */
@@ -215,7 +246,7 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
               {/* Tab Content */}
               <div style={{ flex: 1, overflowY: "auto" }}>
                 {activeTab === "risks"       && <RisksTab       clauseRisks={clauseRisks}  onScrollToClause={scrollToClause} />}
-                {activeTab === "obligations" && <ObligationsTab obligations={obligations}  />}
+                {activeTab === "obligations" && <ObligationsTab obligations={currentObligations} onObligationsUpdated={setCurrentObligations} />}
                 {activeTab === "redlines"    && <RedlinesTab    clauseRisks={clauseRisks}  />}
                 {activeTab === "chat"        && <VaultChat      messages={chatMessages}     documentTitle={doc.title} />}
               </div>
@@ -223,6 +254,16 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
           )}
         </div>
       </div>
+
+      {showSyncPrompt && (
+        <SyncObligationsModal
+          documentId={doc.id}
+          documentTitle={doc.title}
+          obligations={currentObligations}
+          onSyncComplete={handleSyncComplete}
+          onClose={handleDismissPrompt}
+        />
+      )}
     </div>
   );
 }
