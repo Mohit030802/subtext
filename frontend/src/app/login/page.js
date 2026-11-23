@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { Zap, ShieldCheck, FileSearch, AlertTriangle, ArrowRight } from "lucide-react";
+import Logo from "@/components/ui/Logo";
 
 const FEATURES = [
   { icon: FileSearch, label: "Contract Analysis",  desc: "AI-powered clause extraction" },
@@ -189,18 +190,13 @@ export default function LoginPage() {
 
           {/* Logo */}
           <div className="fade-1" style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "52px" }}>
-            <div style={{
-              position: "relative",
-              width: "36px", height: "36px", borderRadius: "9px",
-              background: "#7c3aed",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
+            <div style={{ position: "relative", width: "40px", height: "40px" }}>
               <div style={{
-                position: "absolute", inset: 0, borderRadius: "9px",
+                position: "absolute", inset: 0, borderRadius: "10px",
                 animation: "pulse-ring 2.5s ease-out infinite",
                 border: "2px solid #7c3aed",
               }} />
-              <Zap size={18} color="#fff" fill="#fff" />
+              <Logo size={40} />
             </div>
             <div>
               <div style={{ fontSize: "18px", fontWeight: 800, color: "#fafafa", letterSpacing: "-0.03em" }}>Subtext</div>

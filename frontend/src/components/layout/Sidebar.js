@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import Logo from "@/components/ui/Logo";
 import {
   LayoutDashboard, Users, ChevronDown,
-  FileText, FolderOpen, Building2, Plus, Zap, LogOut,
+  FileText, FolderOpen, Building2, Plus, Zap, LogOut, Coffee,
 } from "lucide-react";
 
 const RISK_COLORS = {
@@ -156,13 +157,7 @@ export default function Sidebar({ navTree = [] }) {
         padding: "16px 16px 14px",
         borderBottom: "1px solid var(--sidebar-border)",
       }}>
-        <div style={{
-          width: "28px", height: "28px", borderRadius: "7px",
-          background: "var(--primary)", display: "flex", alignItems: "center",
-          justifyContent: "center", flexShrink: 0,
-        }}>
-          <Zap size={14} color="#fff" fill="#fff" />
-        </div>
+        <Logo size={30} />
         <div>
           <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg)", lineHeight: 1 }}>
             Subtext
@@ -245,6 +240,38 @@ export default function Sidebar({ navTree = [] }) {
         >
           <Plus size={12} />
           Add Client
+        </Link>
+      </div>
+
+      {/* Buy Me a Coffee / Fuel Subtext */}
+      <div style={{ padding: "0 12px 10px" }}>
+        <Link
+          href="/coffee"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 12px",
+            borderRadius: "8px",
+            fontSize: "12px",
+            fontWeight: 600,
+            color: "#fbbf24",
+            background: "rgba(245, 158, 11, 0.08)",
+            border: "1px solid rgba(245, 158, 11, 0.2)",
+            textDecoration: "none",
+            transition: "all 0.15s ease",
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = "rgba(245, 158, 11, 0.15)";
+            e.currentTarget.style.borderColor = "rgba(245, 158, 11, 0.35)";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = "rgba(245, 158, 11, 0.08)";
+            e.currentTarget.style.borderColor = "rgba(245, 158, 11, 0.2)";
+          }}
+        >
+          <Coffee size={14} color="#f59e0b" />
+          <span>Support Subtext</span>
         </Link>
       </div>
 
