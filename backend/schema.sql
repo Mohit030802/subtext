@@ -219,6 +219,7 @@ CREATE TABLE IF NOT EXISTS obligations (
 
     is_synced_calendar  BOOLEAN       NOT NULL DEFAULT FALSE,
     calendar_event_id   VARCHAR(255),          -- Google Calendar event ID (nullable)
+    reminder_sent_at    TIMESTAMPTZ,            -- Set once the due-date reminder email is delivered
 
     created_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW()

@@ -1,0 +1,17 @@
+name: Send obligation reminders
+
+on:
+  schedule:
+    - cron: "30 3 * * *" # 09:00 Asia/Kolkata
+  workflow_dispatch:
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run daily reminder job
+        run: >-
+          curl --fail --show-error --silent
+          --request POST
+          --header "X-Cron-Secret: ${{ secrets.REMINDER_CRON_SECRET }}"
+          "${{ secrets.REMINDER_API_URL }}"

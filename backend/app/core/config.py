@@ -18,6 +18,15 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     AUTH_SECRET: str = ""
 
+    # ── Email reminders (Gmail Workspace SMTP) ───────────────
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 465
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAIL_FROM: str = ""
+    REMINDER_LEAD_DAYS: int = 20
+    CRON_SECRET: str = ""
+
     # ── App ───────────────────────────────────────────────────
     APP_SECRET_KEY: str = "change-this-to-a-random-string"
     UPLOAD_DIR: str = "./uploads"
