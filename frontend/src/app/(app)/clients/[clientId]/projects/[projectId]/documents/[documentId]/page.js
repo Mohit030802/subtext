@@ -3,13 +3,19 @@ import DocumentWorkspace from "@/components/document/DocumentWorkspace";
 import EmptyState from "@/components/ui/EmptyState";
 import { AlertTriangle } from "lucide-react";
 
-export default async function DocumentPage({ params }) {
+export default async function DocumentPage({ params, searchParams }) {
   const { clientId, projectId, documentId } = await params;
+  const { version } = await searchParams;
   let document = null;
+  let versions = [];
   let hasError = false;
 
   try {
-    document = await api.get(`/documents/${documentId}`);
+    const versionQuery = version ? `?version=${encodeURIComponent(version)}` : "";
+    [document, versions] = await Promise.all([
+      api.get(`/documents/${documentId}${versionQuery}`),
+      api.get(`/documents/${documentId}/versions`),
+    ]);
   } catch (error) {
     console.error("Document fetch error:", error);
     hasError = true;
@@ -30,6 +36,7 @@ export default async function DocumentPage({ params }) {
   return (
     <DocumentWorkspace 
       document={document}
+      versions={versions}
       clientId={clientId}
       projectId={projectId}
     />

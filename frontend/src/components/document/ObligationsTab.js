@@ -1,7 +1,12 @@
 "use client";
 
-import { CalendarPlus, CalendarCheck } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CalendarPlus, CalendarCheck, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { markObligationCalendarSynced } from "@/lib/actions";
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
 
 const STATUS = {
   PENDING:   { label: "Pending",   color: "#60a5fa", bg: "rgba(96,165,250,0.1)"  },
@@ -16,6 +21,75 @@ const PARTY = {
 };
 
 export default function ObligationsTab({ obligations }) {
+  const [syncedIds, setSyncedIds] = useState(() => new Set(
+    obligations.filter((obligation) => obligation.is_synced_calendar).map((obligation) => obligation.id)
+  ));
+  const [syncingId, setSyncingId] = useState(null);
+  const tokenClientRef = useRef(null);
+
+  useEffect(() => {
+    if (document.querySelector('script[src*="accounts.google.com/gsi/client"]')) return;
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+  }, []);
+
+  const getCalendarToken = () => new Promise((resolve, reject) => {
+    const requestToken = () => {
+      if (!window.google?.accounts?.oauth2) {
+        setTimeout(requestToken, 200);
+        return;
+      }
+      tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: CALENDAR_SCOPE,
+        callback: (response) => response.error
+          ? reject(new Error(response.error))
+          : resolve(response.access_token),
+      });
+      tokenClientRef.current.requestAccessToken({ prompt: "consent" });
+    };
+    requestToken();
+  });
+
+  const addToCalendar = async (obligation) => {
+    if (!obligation.due_date || syncedIds.has(obligation.id) || syncingId) return;
+    setSyncingId(obligation.id);
+    try {
+      const accessToken = await getCalendarToken();
+      const startDate = obligation.due_date;
+      const endDate = new Date(`${startDate}T00:00:00Z`);
+      endDate.setUTCDate(endDate.getUTCDate() + 1);
+      const calendarResponse = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          summary: obligation.title,
+          description: obligation.description || "Obligation extracted by Subtext.",
+          start: { date: startDate },
+          end: { date: endDate.toISOString().slice(0, 10) },
+        }),
+      });
+      if (!calendarResponse.ok) {
+        const error = await calendarResponse.json().catch(() => ({}));
+        throw new Error(error.error?.message || "Google Calendar could not create the event");
+      }
+      const event = await calendarResponse.json();
+      await markObligationCalendarSynced(obligation.document_id, obligation.id, event.id);
+      setSyncedIds((current) => new Set([...current, obligation.id]));
+    } catch (error) {
+      console.error("Calendar sync failed:", error);
+      alert(`Could not add this obligation to Google Calendar: ${error.message}`);
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
   const sorted = [...obligations].sort((a,b) => new Date(a.due_date||0)-new Date(b.due_date||0));
 
   if (!sorted.length)
@@ -26,6 +100,8 @@ export default function ObligationsTab({ obligations }) {
       {sorted.map((obl, i) => {
         const st = STATUS[obl.status]||STATUS.PENDING;
         const party = PARTY[obl.party_responsible]||PARTY.THIRD_PARTY;
+        const isSynced = syncedIds.has(obl.id);
+        const isSyncing = syncingId === obl.id;
         return (
           <div
             key={obl.id}
@@ -45,8 +121,16 @@ export default function ObligationsTab({ obligations }) {
                   </div>
                 )}
               </div>
-              <button>
-                {obl.is_synced_calendar
+              <button
+                type="button"
+                onClick={() => addToCalendar(obl)}
+                disabled={!obl.due_date || isSynced || isSyncing}
+                title={!obl.due_date ? "This obligation has no due date" : isSynced ? "Added to Google Calendar" : "Add to Google Calendar"}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "3px", background: "transparent", border: "none", cursor: !obl.due_date || isSynced || isSyncing ? "default" : "pointer", opacity: !obl.due_date ? 0.4 : 1 }}
+              >
+                {isSyncing
+                  ? <Loader2 size={15} color="var(--muted-fg)" style={{ animation: "spin 1s linear infinite" }} />
+                  : isSynced
                   ? <CalendarCheck size={15} color="#34d399" />
                   : <CalendarPlus size={15} color="var(--subtle-fg)" style={{ transition: "color 0.12s" }}
                       onMouseEnter={e => e.currentTarget.style.color="var(--text-3)"}

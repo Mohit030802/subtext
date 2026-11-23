@@ -62,7 +62,7 @@ async def get_nav_tree(
         for project in client.projects:
             # Only include the 5 most recent docs per project in the sidebar
             recent_docs = sorted(
-                project.documents,
+                (document for document in project.documents if document.is_latest),
                 key=lambda d: d.created_at,
                 reverse=True
             )[:5]

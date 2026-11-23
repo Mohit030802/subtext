@@ -19,7 +19,7 @@ async def get_clients(
 ):
     project_count_stmt = (
         select(func.count(Project.id))
-        .where(Project.client_id == Client.id)
+        .where(Project.client_id == Client.id, Document.is_latest.is_(True))
         .scalar_subquery()
     )
     
@@ -27,7 +27,7 @@ async def get_clients(
         select(func.count(Document.id))
         .select_from(Document)
         .join(Project, Project.id == Document.project_id)
-        .where(Project.client_id == Client.id)
+        .where(Project.client_id == Client.id, Document.is_latest.is_(True))
         .scalar_subquery()
     )
     
@@ -35,7 +35,7 @@ async def get_clients(
         select(func.count(Document.id))
         .select_from(Document)
         .join(Project, Project.id == Document.project_id)
-        .where(Project.client_id == Client.id)
+        .where(Project.client_id == Client.id, Document.is_latest.is_(True))
         .where(Document.risk_score == 'HIGH')
         .scalar_subquery()
     )
@@ -85,7 +85,7 @@ async def get_client(
 ):
     project_count_stmt = (
         select(func.count(Project.id))
-        .where(Project.client_id == Client.id)
+        .where(Project.client_id == Client.id, Document.is_latest.is_(True))
         .scalar_subquery()
     )
     

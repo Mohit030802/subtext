@@ -1,6 +1,7 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from typing import Annotated, List
+import uuid
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,7 +42,7 @@ async def get_documents(
 ):
     await verify_project_ownership(project_id, current_user.id, db)
     
-    stmt = select(Document).where(Document.project_id == project_id)
+    stmt = select(Document).where(Document.project_id == project_id, Document.is_latest.is_(True))
     result = await db.execute(stmt)
     return result.scalars().all()
 
@@ -55,8 +56,13 @@ async def create_document(
 ):
     await verify_project_ownership(project_id, current_user.id, db)
 
+    document_id = uuid.uuid4()
     document = Document(
+        id=document_id,
         project_id=project_id,
+        document_family_id=document_id,
+        version_number=1,
+        is_latest=True,
         title=doc_in.title,
         doc_type=doc_in.doc_type or "OTHER",
         google_drive_file_id=doc_in.google_drive_file_id,
@@ -84,12 +90,20 @@ async def create_document(
 async def get_document(
     document_id: str,
     current_user: Annotated[User, Depends(get_current_user)],
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    version: int | None = Query(default=None, ge=1),
 ):
+    requested = await verify_document_ownership(document_id, current_user.id, db)
+    filters = [Document.document_family_id == requested.document_family_id]
+    if version is None:
+        filters.append(Document.is_latest.is_(True))
+    else:
+        filters.append(Document.version_number == version)
+
     stmt = select(Document).options(
         selectinload(Document.clause_risks),
         selectinload(Document.obligations)
-    ).join(Project).join(Client).where(Document.id == document_id, Client.user_id == current_user.id)
+    ).join(Project).join(Client).where(*filters, Client.user_id == current_user.id)
     
     result = await db.execute(stmt)
     document = result.scalar_one_or_none()
@@ -99,6 +113,63 @@ async def get_document(
         
     return document
 
+
+@router.get("/documents/{document_id}/versions", response_model=List[DocumentOut])
+async def get_document_versions(
+    document_id: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db),
+):
+    requested = await verify_document_ownership(document_id, current_user.id, db)
+    stmt = select(Document).where(
+        Document.document_family_id == requested.document_family_id
+    ).order_by(Document.version_number.desc())
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+@router.post("/documents/{document_id}/versions", response_model=DocumentOut)
+async def create_document_version(
+    document_id: str,
+    doc_in: DocumentCreate,
+    background_tasks: BackgroundTasks,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db),
+):
+    requested = await verify_document_ownership(document_id, current_user.id, db)
+    latest_result = await db.execute(
+        select(Document).where(
+            Document.document_family_id == requested.document_family_id,
+            Document.is_latest.is_(True),
+        ).with_for_update()
+    )
+    latest = latest_result.scalar_one()
+
+    new_version = Document(
+        id=uuid.uuid4(),
+        project_id=latest.project_id,
+        document_family_id=latest.document_family_id,
+        version_number=latest.version_number + 1,
+        is_latest=True,
+        previous_version_id=latest.id,
+        title=doc_in.title or latest.title,
+        doc_type=doc_in.doc_type or latest.doc_type,
+        google_drive_file_id=doc_in.google_drive_file_id,
+        google_drive_view_url=doc_in.google_drive_view_url,
+        google_drive_mime_type=doc_in.google_drive_mime_type,
+        page_count=doc_in.page_count,
+        status="PENDING",
+    )
+    latest.is_latest = False
+    db.add(new_version)
+    await db.commit()
+    await db.refresh(new_version)
+
+    if doc_in.drive_access_token:
+        background_tasks.add_task(process_document_background, str(new_version.id), doc_in.drive_access_token)
+
+    return new_version
+
 @router.delete("/documents/{document_id}")
 async def delete_document(
     document_id: str,
@@ -106,7 +177,9 @@ async def delete_document(
     db: AsyncSession = Depends(get_db)
 ):
     document = await verify_document_ownership(document_id, current_user.id, db)
-    await db.delete(document)
+    await db.execute(
+        delete(Document).where(Document.document_family_id == document.document_family_id)
+    )
     await db.commit()
     return {"ok": True}
 

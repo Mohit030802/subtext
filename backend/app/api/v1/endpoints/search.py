@@ -95,7 +95,7 @@ async def search(
         .join(Project, Project.id == Document.project_id)
         .join(Client, Client.id == Project.client_id)
         .where(Client.user_id == current_user.id)
-        .where(Document.title.ilike(pattern))
+        .where(Document.title.ilike(pattern), Document.is_latest.is_(True))
         .limit(8)
     )
     doc_rows = (await db.execute(doc_stmt)).all()

@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { importDocument } from "@/lib/actions";
+import { useRouter } from "next/navigation";
+import { importDocument, updateDocument } from "@/lib/actions";
 import { FolderOpen, Loader2 } from "lucide-react";
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-export default function DriveImportButton({ projectId }) {
+export default function DriveImportButton({ projectId, documentId, clientId }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | auth | picker | importing
   const gisReady = useRef(false);
@@ -76,15 +78,24 @@ export default function DriveImportButton({ projectId }) {
         setStatus("importing");
 
         try {
-          await importDocument(projectId, {
+          const driveData = {
             title: file.name,
             doc_type: detectDocType(file.name, file.mimeType),
             google_drive_file_id: file.id,
             google_drive_view_url: `https://drive.google.com/file/d/${file.id}/view`,
             google_drive_mime_type: file.mimeType,
             page_count: null,
-            drive_access_token: accessToken, // backend uses this to download + process
-          });
+            drive_access_token: accessToken,
+          };
+          if (documentId) {
+            await updateDocument(documentId, driveData);
+          } else {
+            await importDocument(projectId, driveData);
+          }
+          if (documentId) {
+            router.replace(`/clients/${clientId}/projects/${projectId}/documents/${documentId}`);
+            router.refresh();
+          }
           setStatus("idle");
         } catch (err) {
           console.error("Import failed:", err);
@@ -150,7 +161,7 @@ export default function DriveImportButton({ projectId }) {
   };
 
   const buttonLabel = {
-    idle: "Import from Google Drive",
+    idle: documentId ? "Upload new version" : "Import from Google Drive",
     auth: "Requesting Drive access…",
     picker: "Select a file…",
     importing: "Importing…",

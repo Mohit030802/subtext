@@ -25,6 +25,7 @@ class Obligation(Base):
     status: Mapped[str] = mapped_column(String(20), server_default="PENDING")
     is_synced_calendar: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     calendar_event_id: Mapped[str | None] = mapped_column(String(255))
+    reminder_sent_at: Mapped[datetime | None] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(server_default=text("NOW()"))
     updated_at: Mapped[datetime] = mapped_column(server_default=text("NOW()"), onupdate=text("NOW()"))
 
