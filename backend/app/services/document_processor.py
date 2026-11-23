@@ -34,7 +34,7 @@ log = logging.getLogger("subtext.processor")
 
 # ── Gemini setup ─────────────────────────────────────────────────────────────
 _genai_client = genai.Client(api_key=settings.GOOGLE_API_KEY)
-GEMINI_MODEL = "gemini-3.6-flash"   # Latest available for this API key
+GEMINI_MODELS = ["gemini-3-flash-preview", "gemini-3.6-flash", "gemini-3.8-flash"]
 
 ANALYSIS_PROMPT = """You are an expert legal AI assistant specializing in contract analysis.
 
@@ -142,26 +142,35 @@ async def analyze_with_gemini(text: str, title: str, previous_metadata: dict | N
         previous_metadata=json.dumps(previous_metadata or {}, ensure_ascii=False)[:20_000],
     )
 
-    print(f"[processor] Calling Gemini model={GEMINI_MODEL}, text_len={len(truncated)}", flush=True)
+    last_error = None
+    for model_name in GEMINI_MODELS:
+        try:
+            print(f"[processor] Calling Gemini model={model_name}, text_len={len(truncated)}", flush=True)
 
-    # Use the async client interface directly — no run_in_executor needed
-    response = await _genai_client.aio.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt,
-        config=genai_types.GenerateContentConfig(
-            temperature=0.1,
-            response_mime_type="application/json",
-        ),
-    )
+            response = await _genai_client.aio.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=genai_types.GenerateContentConfig(
+                    temperature=0.1,
+                    response_mime_type="application/json",
+                    automatic_function_calling=genai_types.AutomaticFunctionCallingConfig(disable=True),
+                    thinking_config=genai_types.ThinkingConfig(thinking_budget=0),
+                ),
+            )
 
-    raw = response.text.strip()
-    print(f"[processor] Gemini response len={len(raw)}, preview={raw[:80]}", flush=True)
+            raw = response.text.strip()
+            print(f"[processor] Gemini response len={len(raw)}, preview={raw[:80]}", flush=True)
 
-    # Strip markdown code fences if Gemini wrapped it
-    raw = re.sub(r"^```(?:json)?\s*", "", raw)
-    raw = re.sub(r"\s*```$", "", raw)
+            # Strip markdown code fences if Gemini wrapped it
+            raw = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
 
-    return json.loads(raw)
+            return json.loads(raw)
+        except Exception as e:
+            print(f"[processor] Model {model_name} failed: {type(e).__name__}: {e}", flush=True)
+            last_error = e
+
+    raise last_error or RuntimeError("All Gemini models failed")
 
 
 # ── Step 4: Persist results to DB ────────────────────────────────────────────
@@ -287,7 +296,7 @@ async def process_document_background(document_id: str, drive_access_token: str)
                 raise ValueError("Extracted text is too short — the file may be empty or image-only PDF")
 
             # Step 3: Gemini analysis
-            print(f"[processor] STEP 3: Sending to Gemini ({GEMINI_MODEL})...", flush=True)
+            print(f"[processor] STEP 3: Sending to Gemini ({GEMINI_MODELS[0]})...", flush=True)
             previous_metadata = None
             if doc.previous_version_id:
                 previous_result = await db.execute(
