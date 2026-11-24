@@ -68,9 +68,20 @@ export default function ProjectDetailsPageContent({ client, project, documents =
           </Link>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--subtle-fg)", marginBottom: "4px" }}>
-              <span>{client.name}</span>
+              <Link
+                href={`/clients/${client.id}`}
+                style={{
+                  color: "var(--subtle-fg)",
+                  textDecoration: "none",
+                  transition: "color 0.12s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "var(--text-1)"}
+                onMouseLeave={e => e.currentTarget.style.color = "var(--subtle-fg)"}
+              >
+                {client.name}
+              </Link>
               <ChevronRight size={12} />
-              <span style={{ color: "var(--text-2)" }}>{project.name}</span>
+              <span style={{ color: "var(--text-2)", fontWeight: 500 }}>{project.name}</span>
             </div>
             <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--fg)" }}>{project.name}</h1>
             {project.description && (

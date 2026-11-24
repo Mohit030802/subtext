@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Coffee, Lightbulb, Bug, Hand, Mail, Check, Copy, ArrowUpRight, Minus, Plus } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { Coffee, Lightbulb, Bug, Hand, Mail, Check, Copy, ArrowUpRight, ExternalLink, Minus, Plus } from "lucide-react";
 
 const GMAIL = "mohitom2002@gmail.com";
 const GITHUB_USER = "Mohit030802";
@@ -85,11 +86,22 @@ function HandleRow({ label, value, href, icon, copied, onCopy }) {
 }
 
 export default function ContactSupportPage() {
+  const { data: session } = useSession();
+  const userEmail = session?.user?.email || "";
+  const userName = session?.user?.name || "";
+
   const [intentId, setIntentId] = useState("coffee");
   const [cups, setCups] = useState(1);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [copiedKey, setCopiedKey] = useState(null);
+
+  // Automatically pre-fill the name with the logged-in user
+  useEffect(() => {
+    if (userName && !name) {
+      setName(userName);
+    }
+  }, [userName, name]);
 
   const intent = INTENTS.find((i) => i.id === intentId);
 
@@ -106,14 +118,17 @@ export default function ContactSupportPage() {
       lines.push(message.trim() || "…");
     }
     lines.push("");
-    lines.push(`— ${name.trim() || "A Subtext user"}`);
+    const senderName = name.trim() || userName || "A Subtext user";
+    const senderEmail = userEmail ? ` (${userEmail})` : "";
+    lines.push(`— ${senderName}${senderEmail}`);
     return lines.join("\n");
-  }, [intentId, cups, message, name]);
+  }, [intentId, cups, message, name, userName, userEmail]);
 
   const total = cups * CUP_PRICE;
   const isIssueIntent = intentId === "bug" || intentId === "feature";
   const subject = intentId === "coffee" ? `${intent.subject} (${cups}x)` : intent.subject;
   const mailHref = `mailto:${GMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(draft)}`;
+  const gmailWebHref = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(GMAIL)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(draft)}`;
   const issueHref = `https://github.com/${REPO}/issues/new?title=${encodeURIComponent(subject)}&body=${encodeURIComponent(draft)}`;
 
   const copy = (key, text) => {
@@ -259,9 +274,20 @@ export default function ContactSupportPage() {
 
           {/* Live draft */}
           <div style={{ marginBottom: "16px" }}>
-            <div style={{ fontSize: "11px", color: "var(--muted-fg)", marginBottom: "6px", display: "flex", justifyContent: "space-between" }}>
-              <span>Live preview</span>
-              <span style={{ fontFamily: "var(--font-mono)" }}>to: {GMAIL}</span>
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "7px 12px", borderRadius: "8px", background: "var(--bg)",
+              border: "1px solid var(--border)", fontSize: "11px", fontFamily: "var(--font-mono)",
+              marginBottom: "8px",
+            }}>
+              <span>
+                <span style={{ color: "var(--muted-fg)" }}>From: </span>
+                <strong style={{ color: "var(--text-1)" }}>{userEmail || "Your account"}</strong>
+              </span>
+              <span>
+                <span style={{ color: "var(--muted-fg)" }}>To: </span>
+                <strong style={{ color: "#fbbf24" }}>{GMAIL}</strong>
+              </span>
             </div>
             <pre style={{
               margin: 0, padding: "12px 14px", borderRadius: "10px", background: "var(--bg)",
@@ -272,27 +298,46 @@ export default function ContactSupportPage() {
             </pre>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-            <a href={mailHref} style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-              padding: "11px", borderRadius: "10px", background: intent.accent, color: "#09090b",
-              fontSize: "13px", fontWeight: 700, textDecoration: "none", transition: "opacity 0.12s",
-            }}>
-              <Mail size={15} /> Send via Gmail
-            </a>
+          {/* Action buttons */}
+          <div style={{ display: "grid", gridTemplateColumns: isIssueIntent ? "1fr 1fr" : "1.2fr 1fr", gap: "10px" }}>
             <a
-              href={isIssueIntent ? issueHref : `https://github.com/${REPO}`}
+              href={gmailWebHref}
               target="_blank"
               rel="noopener noreferrer"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                padding: "11px", borderRadius: "10px", background: intent.accent, color: "#09090b",
+                fontSize: "13px", fontWeight: 700, textDecoration: "none", transition: "opacity 0.12s",
+              }}
+            >
+              <Mail size={15} /> Send with Web Gmail
+            </a>
+            <a
+              href={mailHref}
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
                 padding: "11px", borderRadius: "10px", background: "transparent", color: "var(--text-1)",
                 border: "1px solid var(--border)", fontSize: "13px", fontWeight: 600, textDecoration: "none",
               }}
             >
-              {intentId === "bug" ? "Open GitHub issue" : intentId === "feature" ? "Request on GitHub" : "Star on GitHub"}
-              <ArrowUpRight size={14} />
+              <ExternalLink size={14} /> Open in Mail App (Outlook)
             </a>
+            {isIssueIntent && (
+              <a
+                href={issueHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                  padding: "10px", borderRadius: "10px", background: "transparent", color: "var(--muted-fg)",
+                  border: "1px dashed var(--border)", fontSize: "12px", fontWeight: 600, textDecoration: "none",
+                  gridColumn: "span 2",
+                }}
+              >
+                {intentId === "bug" ? "Open as a public GitHub issue instead" : "Submit as a public GitHub issue instead"}
+                <ArrowUpRight size={13} />
+              </a>
+            )}
           </div>
         </div>
 

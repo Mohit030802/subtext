@@ -38,35 +38,45 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # ── UPSERT: create user on first login, update name/avatar on subsequent logins ──
-    upsert_stmt = (
-        insert(User)
-        .values(
+    # ── UPSERT / SYNC: check by google_id or email to support linking & avoid duplicate email collision ──
+    result = await db.execute(
+        select(User).where((User.google_id == google_id) | (User.email == email))
+    )
+    user = result.scalar_one_or_none()
+
+    if user:
+        # User exists: link google_id and sync latest profile info
+        user.google_id = google_id
+        user.email = email
+        if name:
+            user.name = name
+        if picture:
+            user.avatar_url = picture
+        await db.commit()
+        await db.refresh(user)
+    else:
+        # Create new user
+        user = User(
             google_id=google_id,
             email=email,
             name=name,
             avatar_url=picture,
         )
-        .on_conflict_do_update(
-            index_elements=["google_id"],
-            set_={
-                "name": name,
-                "avatar_url": picture,
-                "updated_at": text("NOW()"),
-            },
-        )
-    )
-    await db.execute(upsert_stmt)
-    await db.commit()
-
-    # ── Fetch the fully-mapped ORM User object after upsert ──
-    result = await db.execute(select(User).where(User.google_id == google_id))
-    user = result.scalar_one_or_none()
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create or fetch user",
-        )
+        db.add(user)
+        try:
+            await db.commit()
+            await db.refresh(user)
+        except Exception:
+            await db.rollback()
+            # Concurrent insert safety: re-query existing user
+            res = await db.execute(
+                select(User).where((User.google_id == google_id) | (User.email == email))
+            )
+            user = res.scalar_one_or_none()
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to create or fetch user",
+                )
 
     return user
