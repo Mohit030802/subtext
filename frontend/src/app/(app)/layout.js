@@ -14,7 +14,7 @@ export default async function AppLayout({ children }) {
   return (
     <div className="min-h-screen" style={{ background: "var(--background)" }}>
       <Sidebar navTree={navTree} />
-      <Header />
+      <Header navTree={navTree} />
       <main className="ml-60 pt-12 min-h-screen">
         <div className="p-6">{children}</div>
       </main>

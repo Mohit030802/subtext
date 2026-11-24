@@ -2,11 +2,38 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { Loader2, AlertTriangle, ZoomIn, ZoomOut, RotateCcw, ExternalLink, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { Loader2, AlertTriangle, ShieldCheck, ZoomIn, ZoomOut, RotateCcw, ExternalLink, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { getGoogleAccessToken, DRIVE_SCOPE } from "@/lib/google-auth";
 
 const PDFJS_SCRIPT_SRC = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
 const PDFJS_WORKER_SRC = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+const RISK_PALETTE = {
+  HIGH: {
+    border: "#ef4444",
+    bgActive: "rgba(239, 68, 68, 0.22)",
+    bgInactive: "rgba(239, 68, 68, 0.10)",
+    borderInactive: "rgba(239, 68, 68, 0.65)",
+    glow: "rgba(239, 68, 68, 0.45)",
+    badgeBg: "#ef4444",
+  },
+  MEDIUM: {
+    border: "#f59e0b",
+    bgActive: "rgba(245, 158, 11, 0.22)",
+    bgInactive: "rgba(245, 158, 11, 0.10)",
+    borderInactive: "rgba(245, 158, 11, 0.65)",
+    glow: "rgba(245, 158, 11, 0.45)",
+    badgeBg: "#f59e0b",
+  },
+  LOW: {
+    border: "#10b981",
+    bgActive: "rgba(16, 185, 129, 0.22)",
+    bgInactive: "rgba(16, 185, 129, 0.10)",
+    borderInactive: "rgba(16, 185, 129, 0.65)",
+    glow: "rgba(16, 185, 129, 0.45)",
+    badgeBg: "#10b981",
+  },
+};
 
 /**
  * Normalizes text for comparison (strips line breaks, multiple spaces, punctuation).
@@ -526,7 +553,8 @@ export default function PdfCanvasViewer({
                 if (!box || box.page !== pageNum) return null;
 
                 const isActive = activeRisk?.id === r.id;
-                const isHigh = r.risk_level === "HIGH";
+                const level = (r.risk_level || "MEDIUM").toUpperCase();
+                const palette = RISK_PALETTE[level] || RISK_PALETTE.MEDIUM;
 
                 return (
                   <div
@@ -539,14 +567,12 @@ export default function PdfCanvasViewer({
                       top: `${box.top}px`,
                       width: `${box.width}px`,
                       height: `${box.height}px`,
-                      background: isActive
-                        ? isHigh ? "rgba(239, 68, 68, 0.22)" : "rgba(245, 158, 11, 0.22)"
-                        : isHigh ? "rgba(239, 68, 68, 0.10)" : "rgba(245, 158, 11, 0.10)",
+                      background: isActive ? palette.bgActive : palette.bgInactive,
                       border: isActive
-                        ? `2px solid ${isHigh ? "#ef4444" : "#f59e0b"}`
-                        : `1.5px dashed ${isHigh ? "rgba(239, 68, 68, 0.65)" : "rgba(245, 158, 11, 0.65)"}`,
+                        ? `2px solid ${palette.border}`
+                        : `1.5px dashed ${palette.borderInactive}`,
                       boxShadow: isActive
-                        ? `0 0 16px ${isHigh ? "rgba(239, 68, 68, 0.45)" : "rgba(245, 158, 11, 0.45)"}`
+                        ? `0 0 16px ${palette.glow}`
                         : "none",
                       borderRadius: "6px",
                       cursor: "pointer",
@@ -567,7 +593,7 @@ export default function PdfCanvasViewer({
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "4px",
-                          background: isHigh ? "#ef4444" : "#f59e0b",
+                          background: palette.badgeBg,
                           color: "#ffffff",
                           fontSize: "10px",
                           fontWeight: 700,
@@ -580,7 +606,7 @@ export default function PdfCanvasViewer({
                           userSelect: "none",
                         }}
                       >
-                        <AlertTriangle size={11} />
+                        {level === "LOW" ? <ShieldCheck size={11} /> : <AlertTriangle size={11} />}
                         <span>{r.risk_level} RISK · P.{pageNum}</span>
                       </div>
                     )}
