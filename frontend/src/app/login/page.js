@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { motion, MotionConfig } from "motion/react";
 import { ShieldCheck, Sun, Moon, MoveHorizontal, Loader2 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
+import Logo from "@/components/ui/Logo";
 
 const EASE_EDITORIAL = [0.22, 1, 0.36, 1];
 
@@ -121,23 +122,15 @@ export default function LoginPage() {
           className="login-xray-header"
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                width: "30px",
-                height: "30px",
-                borderRadius: "7px",
-                background: "var(--primary)",
-                color: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 700,
-                fontSize: "14px",
-              }}
-            >
-              S
+            <Logo size={30} />
+            <div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg)", lineHeight: 1 }}>
+                Subtext
+              </div>
+              <div style={{ fontSize: "10px", color: "var(--subtle-fg)", marginTop: "3px", letterSpacing: "0.02em" }}>
+                Read between the lines
+              </div>
             </div>
-            <span style={{ fontSize: "15px", fontWeight: 600, color: "var(--fg)" }}>Subtext</span>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
