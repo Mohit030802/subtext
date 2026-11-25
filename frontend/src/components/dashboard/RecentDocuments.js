@@ -82,7 +82,7 @@ export default function RecentDocuments({ documents }) {
                         textDecoration: "none", display: "flex", alignItems: "center", gap: "6px",
                         transition: "color 0.12s",
                       }}
-                        onMouseEnter={e => e.currentTarget.style.color = "#c4b5fd"}
+                        onMouseEnter={e => e.currentTarget.style.color = "var(--fg)"}
                         onMouseLeave={e => e.currentTarget.style.color = "var(--text-2)"}
                       >
                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "220px" }}>

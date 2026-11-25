@@ -1,189 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { importDocument, updateDocument } from "@/lib/actions";
-import { FolderOpen, Loader2 } from "lucide-react";
-import { getGoogleAccessToken, DRIVE_SCOPE } from "@/lib/google-auth";
+import { Loader2 } from "lucide-react";
+import { openGoogleDrivePicker } from "@/lib/google-auth";
 
-export default function DriveImportButton({ projectId, documentId, clientId }) {
-  const router = useRouter();
-  const { data: session } = useSession();
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("idle"); // idle | auth | picker | importing
-  const gisReady = useRef(false);
-  const pickerReady = useRef(false);
-
-  // Load Google Identity Services + Picker API once on mount
-  useEffect(() => {
-    // 1. Load GIS (for getting Drive access token via popup)
-    if (!document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
-      const gis = document.createElement("script");
-      gis.src = "https://accounts.google.com/gsi/client";
-      gis.async = true;
-      gis.defer = true;
-      gis.onload = () => { gisReady.current = true; };
-      document.body.appendChild(gis);
-    } else {
-      gisReady.current = true;
-    }
-
-    // 2. Load Google Picker API
-    if (!document.querySelector('script[src*="apis.google.com/js/api.js"]')) {
-      const gapi = document.createElement("script");
-      gapi.src = "https://apis.google.com/js/api.js";
-      gapi.async = true;
-      gapi.defer = true;
-      gapi.onload = () => {
-        window.gapi.load("picker", () => { pickerReady.current = true; });
-      };
-      document.body.appendChild(gapi);
-    } else if (window.gapi) {
-      window.gapi.load("picker", () => { pickerReady.current = true; });
-    }
-  }, []);
-
-  const openPicker = (accessToken) => {
-    if (!window.google?.picker) {
-      alert("Google Picker is still loading. Please try again in a moment.");
-      setLoading(false);
-      setStatus("idle");
-      return;
-    }
-
-    const view = new window.google.picker.DocsView()
-      .setMimeTypes([
-        "application/pdf",
-        "application/vnd.google-apps.document",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ].join(","))
-      .setMode(window.google.picker.DocsViewMode.LIST)
-      .setIncludeFolders(false);
-
-    const picker = new window.google.picker.PickerBuilder()
-      .addView(view)
-      .setOAuthToken(accessToken)
-      .setTitle("Select a contract or document")
-      .setCallback(async (data) => {
-        if (data.action === window.google.picker.Action.CANCEL) {
-          setLoading(false);
-          setStatus("idle");
-          return;
-        }
-        if (data.action !== window.google.picker.Action.PICKED) return;
-
-        const file = data.docs[0];
-        setStatus("importing");
-
-        try {
-          const driveData = {
-            title: file.name,
-            doc_type: detectDocType(file.name, file.mimeType),
-            google_drive_file_id: file.id,
-            google_drive_view_url: `https://drive.google.com/file/d/${file.id}/view`,
-            google_drive_mime_type: file.mimeType,
-            page_count: null,
-            drive_access_token: accessToken,
-          };
-          if (documentId) {
-            await updateDocument(documentId, driveData);
-          } else {
-            await importDocument(projectId, driveData);
-          }
-          if (documentId) {
-            router.replace(`/clients/${clientId}/projects/${projectId}/documents/${documentId}`);
-            router.refresh();
-          }
-          setStatus("idle");
-        } catch (err) {
-          console.error("Import failed:", err);
-          alert(`Import failed: ${err.message}`);
-          setStatus("idle");
-        } finally {
-          setLoading(false);
-        }
-      })
-      .build();
-
-    setStatus("picker");
-    picker.setVisible(true);
-  };
-
-  const handleClick = async () => {
-    if (loading) return;
-    setLoading(true);
-    setStatus("auth");
-
-    // Wait for GIS to be ready (it loads async)
-    let waited = 0;
-    while (!window.google?.accounts?.oauth2 && waited < 5000) {
-      await new Promise(r => setTimeout(r, 200));
-      waited += 200;
-    }
-
-    if (!window.google?.accounts?.oauth2) {
-      alert("Google Identity Services failed to load. Please refresh and try again.");
-      setLoading(false);
-      setStatus("idle");
-      return;
-    }
-
-    // Wait for Picker to be ready
-    let pickerWaited = 0;
-    while (!window.google?.picker && pickerWaited < 5000) {
-      await new Promise(r => setTimeout(r, 200));
-      pickerWaited += 200;
-    }
-
-    try {
-      const accessToken = await getGoogleAccessToken(DRIVE_SCOPE, session?.user?.email);
-      openPicker(accessToken);
-    } catch (err) {
-      console.error("Drive auth error:", err);
-      alert(`Drive authorization failed: ${err.message}`);
-      setLoading(false);
-      setStatus("idle");
-    }
-  };
-
-  const buttonLabel = {
-    idle: documentId ? "Upload new version" : "Import from Google Drive",
-    auth: "Requesting Drive access…",
-    picker: "Select a file…",
-    importing: "Importing…",
-  }[status];
-
+function GoogleDriveLogo({ size = 15 }) {
   return (
-    <button
-      onClick={handleClick}
-      disabled={loading}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "8px 16px",
-        borderRadius: "8px",
-        background: loading ? "rgba(124,58,237,0.5)" : "#7c3aed",
-        color: "#fff",
-        fontSize: "13px",
-        fontWeight: 600,
-        border: "none",
-        cursor: loading ? "not-allowed" : "pointer",
-        transition: "opacity 0.15s",
-        fontFamily: "inherit",
-        flexShrink: 0,
-      }}
-      onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = "0.88"; }}
-      onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
-    >
-      {loading
-        ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
-        : <FolderOpen size={14} />
-      }
-      {buttonLabel}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </button>
+    <svg width={size} height={size} viewBox="0 0 87.3 78" style={{ flexShrink: 0 }}>
+      <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+      <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00ac47"/>
+      <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 10.15z" fill="#ea4335"/>
+      <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+      <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+      <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+    </svg>
   );
 }
 
@@ -196,4 +29,114 @@ function detectDocType(filename, mimeType) {
   if (lower.includes("lease")) return "LEASE";
   if (lower.includes("employ")) return "EMPLOYMENT";
   return "OTHER";
+}
+
+export default function DriveImportButton({
+  projectId,
+  documentId,
+  clientId,
+  onDocumentImported,
+}) {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [loading, setLoading] = useState(false);
+  const [label, setLabel] = useState(documentId ? "Upload new version" : "Import from Drive");
+
+  const handleClick = async () => {
+    if (loading) return;
+    setLoading(true);
+    setLabel("Opening Drive…");
+
+    try {
+      await openGoogleDrivePicker({
+        userEmail: session?.user?.email,
+        onPicked: async ({ file, accessToken }) => {
+          setLabel("Importing…");
+          try {
+            const driveData = {
+              title: file.name,
+              doc_type: detectDocType(file.name, file.mimeType),
+              google_drive_file_id: file.id,
+              google_drive_view_url: `https://drive.google.com/file/d/${file.id}/view`,
+              google_drive_mime_type: file.mimeType,
+              page_count: null,
+              drive_access_token: accessToken,
+            };
+
+            if (documentId) {
+              await updateDocument(documentId, driveData);
+              router.replace(`/clients/${clientId}/projects/${projectId}/documents/${documentId}`);
+              router.refresh();
+            } else {
+              const newDoc = await importDocument(projectId, driveData);
+              if (onDocumentImported) {
+                onDocumentImported(newDoc);
+              }
+              router.refresh();
+            }
+          } catch (err) {
+            console.error("Import error:", err);
+            alert(`Import failed: ${err.message}`);
+          } finally {
+            setLoading(false);
+            setLabel(documentId ? "Upload new version" : "Import from Drive");
+          }
+        },
+        onCancel: () => {
+          setLoading(false);
+          setLabel(documentId ? "Upload new version" : "Import from Drive");
+        },
+      });
+    } catch (err) {
+      console.error("Picker launch error:", err);
+      alert(`Could not open Drive: ${err.message}`);
+      setLoading(false);
+      setLabel(documentId ? "Upload new version" : "Import from Drive");
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={loading}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "8px 16px",
+        borderRadius: "8px",
+        background: loading ? "rgba(255, 255, 255, 0.04)" : "rgba(255, 255, 255, 0.07)",
+        border: "1px solid rgba(255, 255, 255, 0.14)",
+        color: "#fafafa",
+        fontSize: "13px",
+        fontWeight: 600,
+        cursor: loading ? "not-allowed" : "pointer",
+        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+        transition: "all 0.15s ease",
+        fontFamily: "inherit",
+        flexShrink: 0,
+      }}
+      onMouseEnter={e => {
+        if (!loading) {
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.11)";
+          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.25)";
+          e.currentTarget.style.transform = "translateY(-1px)";
+        }
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = loading ? "rgba(255, 255, 255, 0.04)" : "rgba(255, 255, 255, 0.07)";
+        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.14)";
+        e.currentTarget.style.transform = "translateY(0)";
+      }}
+    >
+      {loading ? (
+        <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+      ) : (
+        <GoogleDriveLogo size={15} />
+      )}
+      <span>{label}</span>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </button>
+  );
 }

@@ -6,6 +6,8 @@ import UpcomingObligations from "@/components/dashboard/UpcomingObligations";
 import EmptyState from "@/components/ui/EmptyState";
 import { AlertCircle } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   let stats, recentDocs, obligations;
   let hasError = false;

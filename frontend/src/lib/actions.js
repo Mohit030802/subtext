@@ -33,7 +33,8 @@ export async function createProject(clientId, formData) {
 export async function importDocument(projectId, driveData) {
   // driveData includes drive_access_token — backend uses it to download the file for processing
   const doc = await api.post(`/projects/${projectId}/documents`, driveData);
-  revalidatePath(`/clients`);
+  revalidatePath("/clients");
+  revalidatePath("/", "layout");
   return doc;
 }
 

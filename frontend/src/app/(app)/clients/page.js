@@ -5,6 +5,8 @@ import { Building2, ChevronRight, AlertTriangle, Users } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
 import ClientPageContent from "./ClientPageContent"; // Client component wrapper for state
 
+export const dynamic = "force-dynamic";
+
 export default async function ClientsPage() {
   let clients = [];
   let hasError = false;

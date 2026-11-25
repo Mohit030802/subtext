@@ -126,8 +126,8 @@ export default function LoginPage() {
           <div style={{
             position: "absolute", inset: 0, opacity: 0.25,
             backgroundImage: `
-              linear-gradient(rgba(124,58,237,0.15) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(124,58,237,0.15) 1px, transparent 1px)
+              linear-gradient(rgba(79,70,229,0.12) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(79,70,229,0.12) 1px, transparent 1px)
             `,
             backgroundSize: "40px 40px",
           }} />
@@ -136,13 +136,13 @@ export default function LoginPage() {
           <div style={{
             position: "absolute", top: "20%", left: "30%",
             width: "500px", height: "500px",
-            background: "radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 65%)",
+            background: "radial-gradient(circle, rgba(79,70,229,0.1) 0%, transparent 65%)",
             pointerEvents: "none",
           }} />
           <div style={{
             position: "absolute", bottom: "10%", right: "10%",
             width: "300px", height: "300px",
-            background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 65%)",
+            background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 65%)",
             pointerEvents: "none",
           }} />
 
@@ -162,7 +162,7 @@ export default function LoginPage() {
                   borderRadius: "10px",
                   padding: "14px",
                 }}>
-                  <Icon size={16} color="#7c3aed" style={{ marginBottom: "8px" }} />
+                  <Icon size={16} color="#6366f1" style={{ marginBottom: "8px" }} />
                   <div style={{ fontSize: "12px", fontWeight: 600, color: "#e4e4e7", marginBottom: "3px" }}>{label}</div>
                   <div style={{ fontSize: "11px", color: "#52525b" }}>{desc}</div>
                 </div>
@@ -194,7 +194,7 @@ export default function LoginPage() {
               <div style={{
                 position: "absolute", inset: 0, borderRadius: "10px",
                 animation: "pulse-ring 2.5s ease-out infinite",
-                border: "2px solid #7c3aed",
+                border: "2px solid #4f46e5",
               }} />
               <Logo size={40} />
             </div>
@@ -304,10 +304,10 @@ export default function LoginPage() {
           <div className="fade-4" style={{
             display: "flex", alignItems: "flex-start", gap: "10px",
             padding: "14px", borderRadius: "8px",
-            background: "rgba(124,58,237,0.06)",
-            border: "1px solid rgba(124,58,237,0.12)",
+            background: "rgba(79,70,229,0.06)",
+            border: "1px solid rgba(79,70,229,0.14)",
           }}>
-            <ShieldCheck size={15} color="#7c3aed" style={{ flexShrink: 0, marginTop: "1px" }} />
+            <ShieldCheck size={15} color="#6366f1" style={{ flexShrink: 0, marginTop: "1px" }} />
             <p style={{ fontSize: "12px", color: "#71717a", lineHeight: 1.6, margin: 0 }}>
               We use Google OAuth 2.0 for secure, passwordless authentication.
               Your credentials are never stored on our servers.

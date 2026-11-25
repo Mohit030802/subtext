@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { Upload, Sun, Moon, Search, Bell } from "lucide-react";
+import { Sun, Moon, Search } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import dynamic from "next/dynamic";
 
@@ -200,21 +200,6 @@ export default function Header({ navTree = [] }) {
               background: "var(--surface-sm)", color: "var(--subtle-fg)",
               fontFamily: "var(--font-mono)", lineHeight: 1.5,
             }}>⌘K</kbd>
-          </button>
-
-          {/* Upload */}
-          <button style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            padding: "6px 12px", borderRadius: "6px",
-            background: "var(--primary)", color: "#fff",
-            fontSize: "12px", fontWeight: 600, cursor: "pointer",
-            border: "none", transition: "all 0.12s",
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = "#6d28d9"}
-            onMouseLeave={e => e.currentTarget.style.background = "var(--primary)"}
-          >
-            <Upload size={13} />
-            Upload
           </button>
 
           {/* Theme toggle */}

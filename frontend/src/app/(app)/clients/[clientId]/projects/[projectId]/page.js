@@ -1,8 +1,14 @@
 import { api } from "@/lib/api";
 import ProjectDetailsPageContent from "./ProjectDetailsPageContent";
 
-export default async function ProjectPage({ params }) {
+export const dynamic = "force-dynamic";
+
+export default async function ProjectPage({ params, searchParams }) {
   const { clientId, projectId } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const initialAutoDiscover =
+    resolvedSearchParams?.autoDiscover === "1" ||
+    resolvedSearchParams?.autoDiscover === "true";
   let client = null;
   let project = null;
   let documents = [];
@@ -22,5 +28,13 @@ export default async function ProjectPage({ params }) {
     hasError = true;
   }
 
-  return <ProjectDetailsPageContent client={client} project={project} documents={documents} hasError={hasError} />;
+  return (
+    <ProjectDetailsPageContent
+      client={client}
+      project={project}
+      documents={documents}
+      hasError={hasError}
+      initialAutoDiscover={initialAutoDiscover}
+    />
+  );
 }

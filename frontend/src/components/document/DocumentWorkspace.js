@@ -163,7 +163,7 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
               ? `/clients/${clientId}/projects/${projectId}/documents/${doc.document_family_id}`
               : `/clients/${clientId}/projects/${projectId}/documents/${doc.document_family_id}?version=${version.version_number}`;
             return (
-              <Link key={version.id} href={href} style={{ padding: "5px 9px", borderRadius: "5px", textDecoration: "none", whiteSpace: "nowrap", fontSize: "11px", fontWeight: active ? 700 : 500, color: active ? "#c4b5fd" : "var(--muted-fg)", background: active ? "rgba(124,58,237,0.16)" : "transparent", border: active ? "1px solid rgba(124,58,237,0.3)" : "1px solid var(--border)" }}>
+              <Link key={version.id} href={href} style={{ padding: "5px 9px", borderRadius: "5px", textDecoration: "none", whiteSpace: "nowrap", fontSize: "11px", fontWeight: active ? 600 : 500, color: active ? "var(--fg)" : "var(--muted-fg)", background: active ? "var(--surface-md)" : "transparent", border: active ? "1px solid var(--border-hover)" : "1px solid var(--border)" }}>
                 Version {version.version_number}{version.is_latest ? " · Latest" : ""}
               </Link>
             );
@@ -220,7 +220,7 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
 
               {viewerMode === "preview" && targetPage && (
                 <span style={{
-                  background: "rgba(124, 58, 237, 0.15)", color: "#a78bfa",
+                  background: "var(--surface-md)", color: "var(--fg)",
                   padding: "1px 6px", borderRadius: "4px", fontWeight: 600
                 }}>
                   Page {targetPage}
@@ -349,7 +349,7 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
             width: "4px", flexShrink: 0, cursor: "col-resize",
             background: "var(--border)", transition: "background 0.12s",
           }}
-          onMouseEnter={e => e.currentTarget.style.background = "#7c3aed"}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--primary)"}
           onMouseLeave={e => e.currentTarget.style.background = "var(--border)"}
         />
 
@@ -381,7 +381,7 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
                         padding: "12px 16px", fontSize: "12px", fontWeight: 500,
                         color: active ? "var(--text-1)" : "var(--muted-fg)",
                         background: "transparent", border: "none",
-                        borderBottom: active ? "2px solid #7c3aed" : "2px solid transparent",
+                        borderBottom: active ? "2px solid var(--primary)" : "2px solid transparent",
                         cursor: "pointer", whiteSpace: "nowrap",
                         transition: "all 0.12s",
                       }}
