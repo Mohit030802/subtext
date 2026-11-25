@@ -1,56 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { formatDate } from "@/lib/utils";
-import { CalendarPlus, CalendarCheck, Calendar, ArrowUpRight } from "lucide-react";
+import { Calendar, CalendarCheck, ArrowUpRight } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
 
-const STATUS = {
-  PENDING:   { label: "Pending",   color: "#60a5fa", bg: "rgba(96,165,250,0.1)"  },
-  COMPLETED: { label: "Completed", color: "#34d399", bg: "rgba(52,211,153,0.1)"  },
-  OVERDUE:   { label: "Overdue",   color: "#f87171", bg: "rgba(248,113,113,0.1)" },
-};
-
-const OBL_TYPE = {
-  RENEWAL_NOTICE: "Renewal",
-  PAYMENT:        "Payment",
-  DELIVERABLE:    "Deliverable",
-  COMPLIANCE:     "Compliance",
-  EXPIRY:         "Expiry",
-  OTHER:          "Other",
-};
+function parseDateParts(dateStr) {
+  if (!dateStr) return { month: "TBD", day: "—" };
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return { month: "TBD", day: "—" };
+  const month = d.toLocaleString("en-US", { month: "short" }).toUpperCase();
+  const day = String(d.getDate()).padStart(2, "0");
+  return { month, day };
+}
 
 export default function UpcomingObligations({ obligations }) {
   const hasObligations = obligations && obligations.length > 0;
-  
-  const sorted = hasObligations ? [...obligations]
-    .sort((a, b) => new Date(a.due_date || 0) - new Date(b.due_date || 0)) : [];
+  const sorted = hasObligations
+    ? [...obligations].sort((a, b) => new Date(a.due_date || 0) - new Date(b.due_date || 0)).slice(0, 6)
+    : [];
 
   return (
     <div
-      className="fade-up delay-5"
-      style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden", display: "flex", flexDirection: "column" }}
+      className="fade-up delay-4"
+      style={{
+        background: "var(--card)",
+        border: "1px solid var(--border)",
+        borderRadius: "8px",
+        overflow: "hidden",
+      }}
     >
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 20px", borderBottom: "1px solid var(--border)",
-      }}>
-        <div>
-          <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-1)" }}>Upcoming Obligations</div>
-          <div style={{ fontSize: "12px", color: "var(--subtle-fg)", marginTop: "2px" }}>Deadlines & deliverables</div>
-        </div>
-        <button style={{
-          display: "flex", alignItems: "center", gap: "6px",
-          padding: "5px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500,
-          color: "var(--muted-fg)", background: "var(--surface-xs)",
-          border: "1px solid var(--border)", cursor: "pointer", transition: "all 0.12s",
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "16px 20px",
+          borderBottom: "1px solid var(--border)",
         }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--text-1)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--muted-fg)"; }}
-        >
-          <CalendarPlus size={13} />
-          Sync All
-        </button>
+      >
+        <div>
+          <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-1)" }}>
+            Upcoming Obligations
+          </div>
+          <div style={{ fontSize: "12px", color: "var(--muted-fg)", marginTop: "2px" }}>
+            Renewals, notices &amp; deliverables
+          </div>
+        </div>
       </div>
 
       {!hasObligations ? (
@@ -58,92 +53,114 @@ export default function UpcomingObligations({ obligations }) {
           <EmptyState
             icon={Calendar}
             title="No upcoming obligations"
-            description="You are all caught up on your deadlines."
+            description="You are all caught up on your contract deadlines."
           />
         </div>
       ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Obligation</th>
-                <th>Client</th>
-                <th>Due</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th style={{ textAlign: "center" }}>Cal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((obl) => {
-                const st = STATUS[obl.status] || STATUS.PENDING;
-                const typeLabel = OBL_TYPE[obl.obligation_type] || "Other";
-                const isOverdue = obl.status === "OVERDUE";
-                const docHref = obl.client_id && obl.project_id && obl.document_id
-                  ? `/clients/${obl.client_id}/projects/${obl.project_id}/documents/${obl.document_id}`
-                  : null;
-                return (
-                  <tr key={obl.id}>
-                    <td>
-                      {docHref ? (
-                        <Link href={docHref} style={{ textDecoration: "none" }}>
-                          <div style={{
-                            fontSize: "13px", fontWeight: 500, color: "var(--text-2)",
-                            display: "flex", alignItems: "center", gap: "4px",
-                            transition: "color 0.12s",
-                          }}
-                            onMouseEnter={e => e.currentTarget.style.color = "var(--fg)"}
-                            onMouseLeave={e => e.currentTarget.style.color = "var(--text-2)"}
-                          >
-                            {obl.title}
-                            <ArrowUpRight size={11} style={{ opacity: 0.4, flexShrink: 0 }} />
-                          </div>
-                          <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "2px" }}>
-                            {obl.document_title || "Unknown Document"}
-                          </div>
-                        </Link>
-                      ) : (
-                        <>
-                          <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-2)" }}>{obl.title}</div>
-                          <div style={{ fontSize: "11px", color: "var(--subtle-fg)", marginTop: "2px" }}>{obl.document_title || "Unknown Document"}</div>
-                        </>
-                      )}
-                    </td>
-                    <td style={{ fontSize: "12px", color: "var(--muted-fg)", whiteSpace: "nowrap" }}>{obl.client_name || "Unknown"}</td>
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      <span style={{ fontSize: "12px", fontWeight: isOverdue ? 600 : 400, color: isOverdue ? "#f87171" : "var(--text-3)" }}>
-                        {formatDate(obl.due_date)}
-                      </span>
-                    </td>
-                    <td>
-                      <span style={{
-                        display: "inline-block", padding: "2px 7px", borderRadius: "4px",
-                        fontSize: "11px", fontWeight: 500,
-                        background: "var(--surface-sm)", color: "var(--muted-fg)",
-                      }}>{typeLabel}</span>
-                    </td>
-                    <td>
-                      <span className="risk-pill" style={{ background: st.bg, color: st.color }}>
-                        <span className="risk-pill-dot" style={{ background: st.color }} />
-                        {st.label}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      {obl.is_synced_calendar
-                        ? <CalendarCheck size={14} color="#34d399" />
-                        : <button style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: 0.25, transition: "opacity 0.12s" }}
-                            onMouseEnter={e => e.currentTarget.style.opacity = "0.7"}
-                            onMouseLeave={e => e.currentTarget.style.opacity = "0.25"}
-                          >
-                            <CalendarPlus size={14} color="var(--text-3)" />
-                          </button>
-                      }
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div style={{ padding: "8px 0" }}>
+          {sorted.map((obl, idx) => {
+            const { month, day } = parseDateParts(obl.due_date);
+            const isOverdue = obl.status === "OVERDUE";
+            const docHref =
+              obl.client_id && obl.project_id && obl.document_id
+                ? `/clients/${obl.client_id}/projects/${obl.project_id}/documents/${obl.document_id}`
+                : null;
+
+            const inner = (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "10px 20px",
+                  borderBottom: idx < sorted.length - 1 ? "1px solid var(--border)" : "none",
+                  transition: "background 0.12s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-xs)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                {/* Calendar Block Badge */}
+                <div
+                  style={{
+                    width: "40px",
+                    padding: "5px 0",
+                    borderRadius: "6px",
+                    textAlign: "center",
+                    background: isOverdue ? "var(--red-dim)" : "var(--surface-xs)",
+                    border: `1px solid ${isOverdue ? "var(--red-border)" : "var(--border)"}`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 700,
+                      letterSpacing: "0.05em",
+                      color: isOverdue ? "var(--red)" : "var(--muted-fg)",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {month}
+                  </div>
+                  <div
+                    className="font-mono"
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: isOverdue ? "var(--red)" : "var(--fg)",
+                      lineHeight: 1.25,
+                    }}
+                  >
+                    {day}
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      color: "var(--fg)",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{obl.title}</span>
+                    {docHref && <ArrowUpRight size={11} style={{ opacity: 0.4, flexShrink: 0 }} />}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "11.5px",
+                      color: "var(--muted-fg)",
+                      marginTop: "2px",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {obl.document_title || obl.client_name || "Contract Obligation"}
+                  </div>
+                </div>
+
+                {obl.is_synced_calendar && (
+                  <CalendarCheck size={14} color="var(--green)" style={{ flexShrink: 0 }} />
+                )}
+              </div>
+            );
+
+            return docHref ? (
+              <Link key={obl.id} href={docHref} style={{ textDecoration: "none", display: "block" }}>
+                {inner}
+              </Link>
+            ) : (
+              <div key={obl.id}>{inner}</div>
+            );
+          })}
         </div>
       )}
     </div>

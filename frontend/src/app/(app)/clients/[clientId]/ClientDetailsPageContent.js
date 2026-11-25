@@ -37,17 +37,17 @@ export default function ClientDetailsPageContent({ client, projects = [], hasErr
             <ArrowLeft size={16} />
           </Link>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--fg)" }}>{client.name}</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <h1 className="font-serif-editorial" style={{ fontSize: "26px", fontWeight: 400, color: "var(--fg)", margin: 0, lineHeight: 1.15 }}>{client.name}</h1>
               <span style={{
-                fontSize: "10px", padding: "2px 8px", borderRadius: "99px",
-                background: "var(--surface-md)", color: "var(--subtle-fg)"
+                fontSize: "11px", padding: "2px 8px", borderRadius: "99px",
+                background: "var(--surface-sm)", border: "1px solid var(--border)", color: "var(--text-2)"
               }}>
                 {client.industry || "Other"}
               </span>
             </div>
-            <p style={{ fontSize: "14px", color: "var(--subtle-fg)", marginTop: "4px" }}>
-              {projects.length} projects · {client.document_count || 0} documents
+            <p style={{ fontSize: "13px", color: "var(--muted-fg)", marginTop: "4px" }}>
+              {projects.length} project{projects.length === 1 ? "" : "s"} · {client.document_count || 0} document{(client.document_count || 0) === 1 ? "" : "s"}
             </p>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function ClientDetailsPageContent({ client, projects = [], hasErr
                 if (chevron) chevron.style.opacity = "0.4";
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
+                e.currentTarget.style.borderColor = "var(--border)";
                 const chevron = e.currentTarget.querySelector(".chevron");
                 if (chevron) chevron.style.opacity = "0";
               }}

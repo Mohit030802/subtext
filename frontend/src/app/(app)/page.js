@@ -1,10 +1,11 @@
+import Link from "next/link";
 import { api } from "@/lib/api";
 import StatsCards from "@/components/dashboard/StatsCards";
 import RecentDocuments from "@/components/dashboard/RecentDocuments";
 import RiskDistribution from "@/components/dashboard/RiskDistribution";
 import UpcomingObligations from "@/components/dashboard/UpcomingObligations";
 import EmptyState from "@/components/ui/EmptyState";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
     const [statsRes, recentRes, obligationsRes] = await Promise.all([
       api.get("/dashboard/stats"),
       api.get("/dashboard/recent"),
-      api.get("/dashboard/obligations")
+      api.get("/dashboard/obligations"),
     ]);
     stats = statsRes;
     recentDocs = recentRes;
@@ -28,7 +29,7 @@ export default async function DashboardPage() {
 
   if (hasError) {
     return (
-      <div style={{ maxWidth: "1280px", margin: "0 auto", paddingTop: "2rem" }}>
+      <div style={{ maxWidth: "1240px", margin: "0 auto", paddingTop: "2rem" }}>
         <EmptyState
           icon={AlertCircle}
           title="Could not load dashboard"
@@ -39,29 +40,60 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-      {/* Page header */}
-      <div className="fade-up" style={{ marginBottom: "24px" }}>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#fafafa", letterSpacing: "-0.03em", lineHeight: 1 }}>
-          Dashboard
-        </h1>
-        <p style={{ fontSize: "13px", color: "var(--subtle-fg)", marginTop: "6px" }}>
-          Overview of your contract portfolio
-        </p>
+    <div style={{ maxWidth: "1240px", margin: "0 auto" }}>
+      {/* Editorial Legal Header */}
+      <div
+        className="fade-up"
+        style={{
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          gap: "16px",
+          marginBottom: "22px",
+        }}
+      >
+        <div>
+          <h1
+            className="font-serif-editorial"
+            style={{
+              fontSize: "28px",
+              fontWeight: 400,
+              color: "var(--fg)",
+              lineHeight: 1.15,
+              margin: 0,
+            }}
+          >
+            Portfolio Overview
+          </h1>
+          <p style={{ fontSize: "13px", color: "var(--muted-fg)", marginTop: "6px" }}>
+            Real-time risk intelligence across your active client agreements.
+          </p>
+        </div>
+
+        <Link href="/clients" className="btn btn-primary" style={{ textDecoration: "none" }}>
+          <Plus size={14} />
+          <span>Manage Clients</span>
+        </Link>
       </div>
 
-      {/* Stats */}
+      {/* Hairline-Divided Editorial KPI Strip */}
       <StatsCards stats={stats} />
 
-      {/* Middle row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: "12px", marginTop: "12px" }}>
+      {/* 2-Column Editorial Grid */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1.75fr) minmax(300px, 1fr)",
+          gap: "20px",
+          marginTop: "24px",
+          alignItems: "start",
+        }}
+      >
         <RecentDocuments documents={recentDocs} />
-        <RiskDistribution stats={stats} />
-      </div>
-
-      {/* Obligations */}
-      <div style={{ marginTop: "12px" }}>
-        <UpcomingObligations obligations={obligations} />
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          <RiskDistribution stats={stats} documents={recentDocs} />
+          <UpcomingObligations obligations={obligations} />
+        </div>
       </div>
     </div>
   );

@@ -1,9 +1,20 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, Clock, ArrowLeftRight, MessageSquare, ChevronLeft, FileText, ExternalLink, Copy, X } from "lucide-react";
-import RisksTab from "./RisksTab";
+import {
+  Clock,
+  ArrowLeftRight,
+  MessageSquare,
+  ChevronLeft,
+  FileText,
+  ExternalLink,
+  Copy,
+  Check,
+  X,
+  BookOpen,
+} from "lucide-react";
+import { formatDate } from "@/lib/utils";
 import ObligationsTab from "./ObligationsTab";
 import RedlinesTab from "./RedlinesTab";
 import VaultChat from "./VaultChat";
@@ -13,74 +24,81 @@ import SyncObligationsModal from "./SyncObligationsModal";
 import PdfCanvasViewer from "./PdfCanvasViewer";
 
 const TABS = [
-  { id: "risks",       label: "Traps & Risks", icon: AlertTriangle },
-  { id: "obligations", label: "Obligations",   icon: Clock         },
-  { id: "redlines",    label: "Redlines",      icon: ArrowLeftRight},
-  { id: "chat",        label: "Vault Chat",    icon: MessageSquare },
+  { id: "brief",       label: "Executive Brief", icon: BookOpen       },
+  { id: "obligations", label: "Obligations",     icon: Clock          },
+  { id: "redlines",    label: "Redlines",        icon: ArrowLeftRight },
+  { id: "chat",        label: "Ask Vault",       icon: MessageSquare  },
 ];
 
 const RISK_COLORS = {
-  HIGH:   { color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.2)"  },
-  MEDIUM: { color: "#fbbf24", bg: "rgba(251,191,36,0.08)",  border: "rgba(251,191,36,0.2)"   },
-  LOW:    { color: "#34d399", bg: "rgba(52,211,153,0.08)",  border: "rgba(52,211,153,0.2)"   },
+  HIGH:   { label: "High Risk",   verdict: "Negotiation Required", color: "var(--red)",   bg: "var(--red-dim)",   border: "var(--red-border)"   },
+  MEDIUM: { label: "Medium Risk", verdict: "Review Recommended",   color: "var(--amber)", bg: "var(--amber-dim)", border: "var(--amber-border)" },
+  LOW:    { label: "Low Risk",    verdict: "Standard Terms",       color: "var(--green)", bg: "var(--green-dim)", border: "var(--green-border)" },
 };
 
 export default function DocumentWorkspace({ document: doc, versions = [], clientId, projectId }) {
-  const [activeTab, setActiveTab] = useState("risks");
-  const [splitPct, setSplitPct] = useState(52);
-  const containerRef = useRef(null);
-  const dragging = useRef(false);
-
-  const onDragStart = useCallback(() => {
-    dragging.current = true;
-    const onMove = (e) => {
-      if (!dragging.current || !containerRef.current) return;
-      const r = containerRef.current.getBoundingClientRect();
-      const pct = ((e.clientX - r.left) / r.width) * 100;
-      if (pct > 30 && pct < 72) setSplitPct(pct);
-    };
-    const onUp = () => {
-      dragging.current = false;
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  }, []);
-
+  const [activeTab, setActiveTab] = useState("brief");
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [hasOpenedPdf, setHasOpenedPdf] = useState(false);
   const [activeRisk, setActiveRisk] = useState(null);
   const [targetPage, setTargetPage] = useState(null);
   const [iframeKey, setIframeKey] = useState(0);
-  const [viewerMode, setViewerMode] = useState("native"); // "native" (PDF Canvas with Highlights) | "preview" (Drive Iframe)
+  const [viewerMode, setViewerMode] = useState("native");
+  const [copiedId, setCopiedId] = useState(null);
 
-  const scrollToClause = (risk) => {
-    setActiveRisk(risk);
+  const [syncedObligationIds, setSyncedObligationIds] = useState([]);
+  const [showSyncPrompt, setShowSyncPrompt] = useState(false);
+
+  const clauseRisks = doc.clause_risks || [];
+  const sortedRisks = [...clauseRisks].sort((a, b) => {
+    const order = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+    return (order[a.risk_level] ?? 3) - (order[b.risk_level] ?? 3);
+  });
+
+  const currentObligations = (doc.obligations || []).map((o) =>
+    syncedObligationIds.includes(o.id) ? { ...o, is_synced_calendar: true } : o
+  );
+
+  const highCount = clauseRisks.filter((r) => r.risk_level === "HIGH").length;
+  const medCount = clauseRisks.filter((r) => r.risk_level === "MEDIUM").length;
+  const lowCount = clauseRisks.filter((r) => r.risk_level === "LOW").length;
+
+  const riskCfg = doc.risk_score ? RISK_COLORS[doc.risk_score] : RISK_COLORS.LOW;
+  const chatMessages = doc.chat_messages || [];
+
+  const inspectInPdf = (risk = null) => {
+    setActiveRisk(risk ? { ...risk } : null);
     setViewerMode("native");
     if (risk?.page_number) {
       setTargetPage(risk.page_number);
-      setIframeKey(k => k + 1);
+      setIframeKey((k) => k + 1);
     }
+    setHasOpenedPdf(true);
+    setPdfOpen(true);
   };
 
-  const riskCfg = doc.risk_score ? RISK_COLORS[doc.risk_score] : null;
-  const clauseRisks = doc.clause_risks || [];
-  const [currentObligations, setCurrentObligations] = useState(doc.obligations || []);
-  const [showSyncPrompt, setShowSyncPrompt] = useState(false);
-  const chatMessages = doc.chat_messages || []; // assuming empty for now
-  const highCount = clauseRisks.filter(r => r.risk_level === "HIGH").length;
+  const handleCopyRewrite = (id, text) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1800);
+  };
 
   useEffect(() => {
-    setCurrentObligations(doc.obligations || []);
-  }, [doc.obligations]);
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" && pdfOpen) setPdfOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [pdfOpen]);
 
   useEffect(() => {
-    if (doc.status === "ANALYZED" && currentObligations.some(o => o.due_date && !o.is_synced_calendar)) {
+    if (doc.status === "ANALYZED" && (doc.obligations || []).some((o) => o.due_date && !o.is_synced_calendar)) {
       const prompted = typeof window !== "undefined" ? sessionStorage.getItem(`subtext_sync_prompted_${doc.id}`) : "true";
       if (!prompted) {
-        setShowSyncPrompt(true);
+        Promise.resolve().then(() => setShowSyncPrompt(true));
       }
     }
-  }, [doc.status, doc.id, currentObligations]);
+  }, [doc.status, doc.id, doc.obligations]);
 
   const handleDismissPrompt = () => {
     if (typeof window !== "undefined") {
@@ -93,326 +111,801 @@ export default function DocumentWorkspace({ document: doc, versions = [], client
     if (typeof window !== "undefined") {
       sessionStorage.setItem(`subtext_sync_prompted_${doc.id}`, "true");
     }
-    setCurrentObligations(prev =>
-      prev.map(o => (syncedIds.includes(o.id) ? { ...o, is_synced_calendar: true } : o))
-    );
+    setSyncedObligationIds((prev) => [...new Set([...prev, ...syncedIds])]);
   };
 
+  const summaryObj =
+    doc.summary && typeof doc.summary === "object" && !Array.isArray(doc.summary)
+      ? doc.summary
+      : null;
+
+  const summaryOverview =
+    typeof doc.summary === "string" && doc.summary.trim()
+      ? doc.summary
+      : typeof summaryObj?.overview === "string" && summaryObj.overview.trim()
+      ? summaryObj.overview
+      : clauseRisks.length > 0
+      ? `Subtext analyzed this ${doc.doc_type || "contract"} and identified ${clauseRisks.length} notable clause${clauseRisks.length > 1 ? "s" : ""}: ${highCount} high-risk, ${medCount} medium-risk, and ${lowCount} low-risk. Review the flagged items on the right and inspect any clause directly in the source PDF.`
+      : "No material risks were flagged in this agreement. You can still inspect the source document or ask Vault Chat any specific questions.";
+
+  const summaryParties = Array.isArray(summaryObj?.parties)
+    ? summaryObj.parties.filter(Boolean)
+    : typeof summaryObj?.parties === "string" && summaryObj.parties.trim()
+    ? [summaryObj.parties]
+    : [];
+
+  const summaryKeyPoints = Array.isArray(summaryObj?.key_points)
+    ? summaryObj.key_points.filter(Boolean)
+    : [];
+
   return (
-    /* Full-viewport layout: fixed overlay over main content */
-    <div style={{
-      position: "fixed", inset: 0, left: "240px", top: "48px",
-      display: "flex", flexDirection: "column",
-      background: "var(--bg)", zIndex: 40
-    }}>
-      {/* ── Title Bar ── */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: "12px",
-        padding: "0 16px", height: "44px", flexShrink: 0,
-        background: "var(--surface)", borderBottom: "1px solid var(--border)",
-      }}>
-        <Link
-          href={`/clients/${clientId}/projects/${projectId}`}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: "28px", height: "28px", borderRadius: "6px",
-            border: "1px solid var(--border)", color: "var(--muted-fg)",
-            textDecoration: "none", flexShrink: 0, transition: "all 0.12s",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = "var(--surface-sm)"; e.currentTarget.style.color = "var(--text-1)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--muted-fg)"; }}
-        >
-          <ChevronLeft size={14} />
-        </Link>
+    <div style={{ maxWidth: "1140px", margin: "0 auto", paddingBottom: "48px" }}>
+      {/* ── Top Utility Strip ── */}
+      <div
+        className="fade-up"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          marginBottom: "20px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Link
+            href={`/clients/${clientId}/projects/${projectId}`}
+            className="btn btn-secondary"
+            style={{ textDecoration: "none", padding: "5px 10px", fontSize: "12px" }}
+          >
+            <ChevronLeft size={13} />
+            <span>Back to Project</span>
+          </Link>
 
-        <div style={{ width: "1px", height: "18px", background: "var(--border)" }} />
+          {versions.length > 1 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              {versions.map((version) => {
+                const active = version.version_number === doc.version_number;
+                const href = version.is_latest
+                  ? `/clients/${clientId}/projects/${projectId}/documents/${doc.document_family_id}`
+                  : `/clients/${clientId}/projects/${projectId}/documents/${doc.document_family_id}?version=${version.version_number}`;
+                return (
+                  <Link
+                    key={version.id}
+                    href={href}
+                    className="font-mono"
+                    style={{
+                      padding: "4px 9px",
+                      borderRadius: "5px",
+                      textDecoration: "none",
+                      fontSize: "11px",
+                      fontWeight: active ? 600 : 500,
+                      color: active ? "var(--primary)" : "var(--muted-fg)",
+                      background: active ? "var(--primary-dim)" : "var(--card)",
+                      border: `1px solid ${active ? "var(--primary)" : "var(--border)"}`,
+                    }}
+                  >
+                    v{version.version_number}
+                    {version.is_latest ? " · Latest" : ""}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-        <FileText size={14} color="var(--muted-fg)" style={{ flexShrink: 0 }} />
-        <span style={{
-          fontSize: "13px", fontWeight: 600, color: "var(--text-1)",
-          flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        }}>{doc.title}</span>
-
-        <span style={{
-          fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "4px",
-          fontFamily: "var(--font-mono)", background: "var(--surface-sm)", color: "var(--muted-fg)",
-        }}>{doc.doc_type || "OTHER"}</span>
-
-        {riskCfg && (
-          <span className="risk-pill" style={{
-            background: riskCfg.bg, color: riskCfg.color,
-            border: `1px solid ${riskCfg.border}`, flexShrink: 0,
-          }}>
-            <span className="risk-pill-dot" style={{ background: riskCfg.color }} />
-            {doc.risk_score} RISK
-          </span>
-        )}
-
-        <DriveImportButton
-          projectId={projectId}
-          clientId={clientId}
-          documentId={doc.id}
-        />
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <DriveImportButton projectId={projectId} clientId={clientId} documentId={doc.id} />
+          <button
+            type="button"
+            onClick={() => inspectInPdf(activeRisk)}
+            className="btn btn-primary"
+          >
+            <FileText size={13} />
+            <span>Open PDF Viewer</span>
+          </button>
+        </div>
       </div>
 
-      {versions.length > 1 && (
-        <div style={{ display: "flex", gap: "4px", padding: "6px 16px", background: "var(--surface)", borderBottom: "1px solid var(--border)", overflowX: "auto" }}>
-          {versions.map((version) => {
-            const active = version.version_number === doc.version_number;
-            const href = version.is_latest
-              ? `/clients/${clientId}/projects/${projectId}/documents/${doc.document_family_id}`
-              : `/clients/${clientId}/projects/${projectId}/documents/${doc.document_family_id}?version=${version.version_number}`;
-            return (
-              <Link key={version.id} href={href} style={{ padding: "5px 9px", borderRadius: "5px", textDecoration: "none", whiteSpace: "nowrap", fontSize: "11px", fontWeight: active ? 600 : 500, color: active ? "var(--fg)" : "var(--muted-fg)", background: active ? "var(--surface-md)" : "transparent", border: active ? "1px solid var(--border-hover)" : "1px solid var(--border)" }}>
-                Version {version.version_number}{version.is_latest ? " · Latest" : ""}
-              </Link>
-            );
-          })}
+      {/* ── Not Yet Analyzed State ── */}
+      {doc.status !== "ANALYZED" ? (
+        <div
+          className="fade-up"
+          style={{
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+            borderRadius: "10px",
+            minHeight: "460px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <ProcessDocumentPanel documentId={doc.id} initialStatus={doc.status || "PENDING"} />
         </div>
-      )}
-
-      {/* ── Split View ── */}
-      <div ref={containerRef} style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        {/* Left: Document Viewer */}
-        <div style={{
-          width: `${splitPct}%`, display: "flex", flexDirection: "column",
-          borderRight: "1px solid var(--border)", overflow: "hidden",
-          background: "var(--bg)"
-        }}>
-          {/* Document Viewer Header Bar */}
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "8px 14px", background: "var(--surface)", borderBottom: "1px solid var(--border)",
-            flexShrink: 0, fontSize: "11px"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              {/* View Switcher */}
-              <div style={{
-                display: "flex", alignItems: "center", gap: "2px",
-                background: "var(--surface-sm)", padding: "2px", borderRadius: "6px",
-                border: "1px solid var(--border)"
-              }}>
-                <button
-                  type="button"
-                  onClick={() => setViewerMode("native")}
-                  style={{
-                    padding: "3px 9px", borderRadius: "4px", fontSize: "11px", fontWeight: 600,
-                    background: viewerMode === "native" ? "var(--primary)" : "transparent",
-                    color: viewerMode === "native" ? "#fff" : "var(--muted-fg)",
-                    border: "none", cursor: "pointer", transition: "all 0.12s"
-                  }}
-                >
-                  PDF (Highlights)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewerMode("preview")}
-                  style={{
-                    padding: "3px 9px", borderRadius: "4px", fontSize: "11px", fontWeight: 600,
-                    background: viewerMode === "preview" ? "var(--primary)" : "transparent",
-                    color: viewerMode === "preview" ? "#fff" : "var(--muted-fg)",
-                    border: "none", cursor: "pointer", transition: "all 0.12s"
-                  }}
-                >
-                  Google Preview
-                </button>
+      ) : (
+        <>
+          {/* ── Dossier Hero ── */}
+          <div
+            className="fade-up delay-1"
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: "20px",
+              paddingBottom: "22px",
+              borderBottom: "1px solid var(--border)",
+              marginBottom: "20px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--primary)",
+                  marginBottom: "6px",
+                }}
+              >
+                Contract Intelligence Dossier
               </div>
-
-              {viewerMode === "preview" && targetPage && (
-                <span style={{
-                  background: "var(--surface-md)", color: "var(--fg)",
-                  padding: "1px 6px", borderRadius: "4px", fontWeight: 600
-                }}>
-                  Page {targetPage}
+              <h1
+                className="font-serif-editorial"
+                style={{
+                  fontSize: "28px",
+                  fontWeight: 400,
+                  color: "var(--fg)",
+                  margin: 0,
+                  lineHeight: 1.2,
+                }}
+              >
+                {doc.title}
+              </h1>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontSize: "12.5px",
+                  color: "var(--muted-fg)",
+                  marginTop: "8px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  className="tag"
+                  style={{
+                    background: "var(--surface-xs)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-2)",
+                  }}
+                >
+                  {doc.doc_type || "OTHER"}
                 </span>
-              )}
+                <span>·</span>
+                <span className="font-mono">Version {doc.version_number || 1}</span>
+                <span>·</span>
+                <span>Added {formatDate(doc.created_at)}</span>
+              </div>
             </div>
 
-            {doc.google_drive_file_id && (
-              <a
-                href={doc.google_drive_view_url || `https://drive.google.com/file/d/${doc.google_drive_file_id}/view`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "flex", alignItems: "center", gap: "4px",
-                  color: "var(--muted-fg)", textDecoration: "none", fontSize: "11px",
-                  transition: "color 0.12s"
-                }}
-                onMouseEnter={e => e.currentTarget.style.color = "var(--text-1)"}
-                onMouseLeave={e => e.currentTarget.style.color = "var(--muted-fg)"}
+            {/* Overall Risk Verdict */}
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <div style={{ fontSize: "11px", color: "var(--muted-fg)", marginBottom: "2px" }}>
+                Overall Risk Assessment
+              </div>
+              <div
+                className="font-serif-editorial"
+                style={{ fontSize: "22px", color: riskCfg.color, lineHeight: 1.15 }}
               >
-                <span>Open in Google Drive</span>
-                <ExternalLink size={11} />
-              </a>
-            )}
+                {riskCfg.verdict}
+              </div>
+            </div>
           </div>
 
-          {viewerMode === "native" ? (
-            <PdfCanvasViewer
-              document={doc}
-              clauseRisks={clauseRisks}
-              activeRisk={activeRisk}
-              onSelectRisk={scrollToClause}
-              onSwitchToIframe={() => setViewerMode("preview")}
-            />
-          ) : (
-            <>
-              {/* Active Risk Banner (when in Google Drive iframe mode) */}
-              {activeRisk && (
-                <div style={{
-                  padding: "10px 14px",
-                  background: "var(--surface-sm)",
-                  borderBottom: "1px solid var(--border)",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                  flexShrink: 0
-                }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0, flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{
-                        fontSize: "9px", fontWeight: 700, padding: "2px 5px", borderRadius: "4px",
-                        background: activeRisk.risk_level === "HIGH" ? "rgba(248,113,113,0.15)" : "rgba(251,191,36,0.15)",
-                        color: activeRisk.risk_level === "HIGH" ? "#f87171" : "#fbbf24",
-                      }}>
-                        {activeRisk.risk_level} RISK
-                      </span>
-                      <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-1)" }}>
-                        Page {activeRisk.page_number || 1}
-                      </span>
-                    </div>
-                    <div style={{
-                      fontSize: "11px", color: "var(--text-2)", fontStyle: "italic", lineHeight: 1.4,
-                      overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
-                    }}>
-                      "{activeRisk.clause_text}"
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(activeRisk.clause_text);
-                        alert("Clause copied to clipboard!");
-                      }}
+          {/* ── Clean Hairline Sub-Tabs ── */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "24px",
+              borderBottom: "1px solid var(--border)",
+              marginBottom: "24px",
+              overflowX: "auto",
+            }}
+            className="no-scrollbar"
+          >
+            {TABS.map(({ id, label, icon: Icon }) => {
+              const active = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setActiveTab(id)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "7px",
+                    padding: "10px 0",
+                    fontSize: "13px",
+                    fontWeight: active ? 600 : 500,
+                    color: active ? "var(--primary)" : "var(--muted-fg)",
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: active ? "2px solid var(--primary)" : "2px solid transparent",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    transition: "color 0.12s ease",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  <Icon size={14} />
+                  <span>{label}</span>
+                  {id === "brief" && highCount > 0 && (
+                    <span
+                      className="font-mono"
                       style={{
-                        display: "flex", alignItems: "center", gap: "4px",
-                        fontSize: "11px", padding: "4px 8px", borderRadius: "5px",
-                        background: "var(--surface)", border: "1px solid var(--border)",
-                        color: "var(--text-2)", cursor: "pointer"
+                        fontSize: "10.5px",
+                        fontWeight: 700,
+                        padding: "1px 6px",
+                        borderRadius: "99px",
+                        background: "var(--red-dim)",
+                        color: "var(--red)",
+                        border: "1px solid var(--red-border)",
                       }}
-                      title="Copy clause text"
                     >
-                      <Copy size={11} />
-                      <span>Copy</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveRisk(null)}
+                      {highCount} High
+                    </span>
+                  )}
+                  {id === "obligations" && currentObligations.length > 0 && (
+                    <span
+                      className="font-mono"
                       style={{
-                        background: "transparent", border: "none", color: "var(--subtle-fg)",
-                        cursor: "pointer", padding: "4px"
+                        fontSize: "10.5px",
+                        padding: "1px 6px",
+                        borderRadius: "99px",
+                        background: "var(--surface-sm)",
+                        color: "var(--text-2)",
                       }}
-                      title="Clear highlight"
                     >
-                      <X size={14} />
-                    </button>
+                      {currentObligations.length}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── TAB 1: EXECUTIVE BRIEF (2-Column Editorial Dossier) ── */}
+          {activeTab === "brief" && (
+            <div
+              className="fade-up"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(280px, 1fr) minmax(0, 1.55fr)",
+                gap: "28px",
+                alignItems: "start",
+              }}
+            >
+              {/* Left Column: Summary + Extracted Facts */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--muted-fg)",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Plain-English Summary
                   </div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "13.5px",
+                      color: "var(--text-2)",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {summaryOverview}
+                  </p>
+
+                  {summaryKeyPoints.length > 0 && (
+                    <div style={{ marginTop: "16px" }}>
+                      <div
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                          color: "var(--muted-fg)",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        Key Takeaways
+                      </div>
+                      <ul
+                        style={{
+                          margin: 0,
+                          paddingLeft: "16px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                          fontSize: "12.5px",
+                          color: "var(--text-2)",
+                          lineHeight: 1.55,
+                        }}
+                      >
+                        {summaryKeyPoints.map((pt, idx) => (
+                          <li key={idx}>
+                            {typeof pt === "string" ? pt : JSON.stringify(pt)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {doc.google_drive_file_id ? (
-                <iframe 
+                {/* Extracted Contract Facts Ledger */}
+                <div
+                  style={{
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "8px",
+                    padding: "16px 18px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--muted-fg)",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    Document Snapshot
+                  </div>
+                  {[
+                    ...(summaryParties.length > 0
+                      ? [{ k: "Parties", v: summaryParties.map((p) => (typeof p === "string" ? p : p?.name || JSON.stringify(p))).join(" · ") }]
+                      : []),
+                    { k: "Contract Type", v: doc.doc_type || "OTHER" },
+                    { k: "High-Risk Flags", v: String(highCount), danger: highCount > 0 },
+                    { k: "Medium-Risk Flags", v: String(medCount) },
+                    { k: "Low-Risk Notes", v: String(lowCount) },
+                    { k: "Tracked Obligations", v: String(currentObligations.length) },
+                  ].map((row, idx, arr) => (
+                    <div
+                      key={row.k}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "9px 0",
+                        borderBottom: idx < arr.length - 1 ? "1px solid var(--border)" : "none",
+                        fontSize: "12.5px",
+                      }}
+                    >
+                      <span style={{ color: "var(--muted-fg)" }}>{row.k}</span>
+                      <span
+                        className="font-mono"
+                        style={{
+                          fontWeight: 600,
+                          color: row.danger ? "var(--red)" : "var(--fg)",
+                        }}
+                      >
+                        {row.v}
+                      </span>
+                    </div>
+                  ))}
+
+                  {doc.google_drive_file_id && (
+                    <a
+                      href={
+                        doc.google_drive_view_url ||
+                        `https://drive.google.com/file/d/${doc.google_drive_file_id}/view`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        marginTop: "12px",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                        color: "var(--primary)",
+                        textDecoration: "none",
+                      }}
+                    >
+                      Open original in Google Drive <ExternalLink size={12} />
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Flagged Clauses & Inline Redlines */}
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--muted-fg)",
+                    }}
+                  >
+                    Flagged Clauses &amp; Recommended Redlines ({sortedRisks.length})
+                  </span>
+                </div>
+
+                {sortedRisks.length === 0 ? (
+                  <div
+                    style={{
+                      background: "var(--card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                      padding: "32px 24px",
+                      textAlign: "center",
+                      color: "var(--muted-fg)",
+                      fontSize: "13px",
+                    }}
+                  >
+                    No risky clauses identified in this document.
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                    {sortedRisks.map((risk) => {
+                      const cfg = RISK_COLORS[risk.risk_level] || RISK_COLORS.LOW;
+                      const isCopied = copiedId === risk.id;
+
+                      return (
+                        <div
+                          key={risk.id}
+                          style={{
+                            background: "var(--card)",
+                            border: "1px solid var(--border)",
+                            borderLeft: `3px solid ${cfg.color}`,
+                            borderRadius: "8px",
+                            padding: "16px 18px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: "12px",
+                              marginBottom: "10px",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span
+                                className="risk-pill"
+                                style={{
+                                  background: cfg.bg,
+                                  color: cfg.color,
+                                  border: `1px solid ${cfg.border}`,
+                                }}
+                              >
+                                <span className="risk-pill-dot" style={{ background: cfg.color }} />
+                                {cfg.label}
+                              </span>
+                              <span className="font-mono" style={{ fontSize: "11.5px", color: "var(--muted-fg)" }}>
+                                Page {risk.page_number || 1}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => inspectInPdf(risk)}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                padding: "4px 10px",
+                                borderRadius: "5px",
+                                background: "var(--primary-dim)",
+                                border: "1px solid var(--green-border)",
+                                color: "var(--primary)",
+                                fontSize: "11.5px",
+                                fontWeight: 500,
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                              }}
+                            >
+                              <FileText size={12} />
+                              <span>Inspect in PDF &rarr;</span>
+                            </button>
+                          </div>
+
+                          {risk.clause_text && (
+                            <blockquote
+                              style={{
+                                margin: "0 0 10px",
+                                padding: "9px 12px",
+                                borderRadius: "6px",
+                                background: "var(--surface-xs)",
+                                border: "1px solid var(--border)",
+                                fontSize: "12px",
+                                fontStyle: "italic",
+                                color: "var(--text-2)",
+                                lineHeight: 1.6,
+                              }}
+                            >
+                              &ldquo;{risk.clause_text}&rdquo;
+                            </blockquote>
+                          )}
+
+                          <p
+                            style={{
+                              margin: "0 0 10px",
+                              fontSize: "13px",
+                              color: "var(--fg)",
+                              lineHeight: 1.55,
+                            }}
+                          >
+                            {risk.explanation}
+                          </p>
+
+                          {risk.redline_suggestion && (
+                            <div
+                              style={{
+                                padding: "10px 12px",
+                                borderRadius: "6px",
+                                background: "var(--green-dim)",
+                                border: "1px solid var(--green-border)",
+                                marginTop: "8px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    letterSpacing: "0.06em",
+                                    textTransform: "uppercase",
+                                    color: "var(--green)",
+                                  }}
+                                >
+                                  Suggested Rewrite
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyRewrite(risk.id, risk.redline_suggestion)}
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    background: "transparent",
+                                    border: "none",
+                                    color: "var(--green)",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    fontFamily: "inherit",
+                                  }}
+                                >
+                                  {isCopied ? <Check size={11} /> : <Copy size={11} />}
+                                  <span>{isCopied ? "Copied" : "Copy"}</span>
+                                </button>
+                              </div>
+                              <div style={{ fontSize: "12px", color: "var(--fg)", lineHeight: 1.55 }}>
+                                {risk.redline_suggestion}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 2: OBLIGATIONS ── */}
+          {activeTab === "obligations" && (
+            <div className="card" style={{ overflow: "hidden" }}>
+              <ObligationsTab
+                obligations={currentObligations}
+                onObligationsUpdated={(updated) => {
+                  const synced = updated.filter((u) => u.is_synced_calendar).map((u) => u.id);
+                  setSyncedObligationIds(synced);
+                }}
+              />
+            </div>
+          )}
+
+          {/* ── TAB 3: REDLINES ── */}
+          {activeTab === "redlines" && (
+            <div className="card" style={{ overflow: "hidden" }}>
+              <RedlinesTab clauseRisks={clauseRisks} />
+            </div>
+          )}
+
+          {/* ── TAB 4: ASK VAULT ── */}
+          {activeTab === "chat" && (
+            <div className="card" style={{ height: "580px", overflow: "hidden" }}>
+              <VaultChat messages={chatMessages} documentTitle={doc.title} />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── ON-DEMAND SLIDE-OVER PDF SHEET ── */}
+      {hasOpenedPdf && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPdfOpen(false);
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(24, 24, 27, 0.38)",
+            backdropFilter: "blur(2px)",
+            zIndex: 80,
+            display: pdfOpen ? "flex" : "none",
+            justifyContent: "flex-end",
+          }}
+        >
+          <div
+            style={{
+              width: "56%",
+              minWidth: "520px",
+              maxWidth: "860px",
+              height: "100%",
+              background: "var(--desk)",
+              borderLeft: "1px solid var(--border-hover)",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "-12px 0 40px rgba(0, 0, 0, 0.18)",
+            }}
+          >
+            {/* Sheet Header */}
+            <div
+              style={{
+                padding: "12px 18px",
+                background: "var(--card)",
+                borderBottom: "1px solid var(--border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+                flexShrink: 0,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    padding: "2px",
+                    borderRadius: "6px",
+                    background: "var(--surface-sm)",
+                    border: "1px solid var(--border)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setViewerMode("native")}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "4px",
+                      fontSize: "11.5px",
+                      fontWeight: 500,
+                      border: "none",
+                      cursor: "pointer",
+                      background: viewerMode === "native" ? "var(--primary)" : "transparent",
+                      color: viewerMode === "native" ? "#fff" : "var(--muted-fg)",
+                    }}
+                  >
+                    PDF (Highlights)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewerMode("preview")}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "4px",
+                      fontSize: "11.5px",
+                      fontWeight: 500,
+                      border: "none",
+                      cursor: "pointer",
+                      background: viewerMode === "preview" ? "var(--primary)" : "transparent",
+                      color: viewerMode === "preview" ? "#fff" : "var(--muted-fg)",
+                    }}
+                  >
+                    Google Preview
+                  </button>
+                </div>
+
+                {activeRisk && (
+                  <span
+                    className="font-mono"
+                    style={{
+                      fontSize: "11.5px",
+                      color: "var(--muted-fg)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Inspecting Page {activeRisk.page_number || 1}
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPdfOpen(false)}
+                className="btn btn-secondary"
+                style={{ padding: "5px 10px", fontSize: "12px" }}
+              >
+                <X size={13} />
+                <span>Close</span>
+              </button>
+            </div>
+
+            {/* Sheet Body */}
+            <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              {viewerMode === "native" ? (
+                <PdfCanvasViewer
+                  document={doc}
+                  clauseRisks={clauseRisks}
+                  activeRisk={activeRisk}
+                  onSelectRisk={(risk) => setActiveRisk(risk)}
+                  onSwitchToIframe={() => setViewerMode("preview")}
+                />
+              ) : doc.google_drive_file_id ? (
+                <iframe
                   key={iframeKey}
-                  src={`https://drive.google.com/file/d/${doc.google_drive_file_id}/preview${targetPage ? `#page=${targetPage}` : ""}`} 
-                  width="100%" 
-                  height="100%" 
-                  style={{ border: "none", flex: 1 }}
+                  src={`https://drive.google.com/file/d/${doc.google_drive_file_id}/preview${targetPage ? `#page=${targetPage}` : ""}`}
+                  style={{ width: "100%", height: "100%", border: "none", background: "#fff" }}
                   title={doc.title}
                 />
               ) : (
-                <div style={{ padding: "40px", textAlign: "center", color: "#666" }}>
-                  Document viewer not available. No Google Drive file ID provided.
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "var(--muted-fg)",
+                    fontSize: "13px",
+                  }}
+                >
+                  Google Drive preview unavailable for this file.
                 </div>
               )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
-
-        {/* Drag Handle */}
-        <div
-          onMouseDown={onDragStart}
-          style={{
-            width: "4px", flexShrink: 0, cursor: "col-resize",
-            background: "var(--border)", transition: "background 0.12s",
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = "var(--primary)"}
-          onMouseLeave={e => e.currentTarget.style.background = "var(--border)"}
-        />
-
-        {/* Right: Analysis Panel */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          {doc.status !== "ANALYZED" ? (
-            /* ── Not yet processed: show CTA / spinner ── */
-            <ProcessDocumentPanel
-              documentId={doc.id}
-              initialStatus={doc.status || "PENDING"}
-            />
-          ) : (
-            /* ── Processed: show analysis tabs ── */
-            <>
-              {/* Tab Bar */}
-              <div style={{
-                display: "flex", alignItems: "stretch",
-                background: "var(--surface)", borderBottom: "1px solid var(--border)",
-                flexShrink: 0, overflowX: "auto",
-              }} className="no-scrollbar">
-                {TABS.map(({ id, label, icon: Icon }) => {
-                  const active = activeTab === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => setActiveTab(id)}
-                      style={{
-                        display: "flex", alignItems: "center", gap: "6px",
-                        padding: "12px 16px", fontSize: "12px", fontWeight: 500,
-                        color: active ? "var(--text-1)" : "var(--muted-fg)",
-                        background: "transparent", border: "none",
-                        borderBottom: active ? "2px solid var(--primary)" : "2px solid transparent",
-                        cursor: "pointer", whiteSpace: "nowrap",
-                        transition: "all 0.12s",
-                      }}
-                      onMouseEnter={e => { if (!active) e.currentTarget.style.color = "var(--text-2)"; }}
-                      onMouseLeave={e => { if (!active) e.currentTarget.style.color = "var(--muted-fg)"; }}
-                    >
-                      <Icon size={13} />
-                      {label}
-                      {id === "risks" && highCount > 0 && (
-                        <span style={{
-                          marginLeft: "2px", padding: "1px 5px", borderRadius: "99px",
-                          fontSize: "10px", fontWeight: 700,
-                          background: "rgba(248,113,113,0.12)", color: "#f87171",
-                        }}>{highCount}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Tab Content */}
-              <div style={{ flex: 1, overflowY: "auto" }}>
-                {activeTab === "risks"       && <RisksTab       clauseRisks={clauseRisks}  onScrollToClause={scrollToClause} activeRiskId={activeRisk?.id} />}
-                {activeTab === "obligations" && <ObligationsTab obligations={currentObligations} onObligationsUpdated={setCurrentObligations} />}
-                {activeTab === "redlines"    && <RedlinesTab    clauseRisks={clauseRisks}  />}
-                {activeTab === "chat"        && <VaultChat      messages={chatMessages}     documentTitle={doc.title} />}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+      )}
 
       {showSyncPrompt && (
         <SyncObligationsModal

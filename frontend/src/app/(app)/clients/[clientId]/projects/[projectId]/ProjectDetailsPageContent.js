@@ -117,9 +117,9 @@ export default function ProjectDetailsPageContent({
               <ChevronRight size={12} />
               <span style={{ color: "var(--text-2)", fontWeight: 500 }}>{project.name}</span>
             </div>
-            <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--fg)" }}>{project.name}</h1>
+            <h1 className="font-serif-editorial" style={{ fontSize: "26px", fontWeight: 400, color: "var(--fg)", margin: 0, lineHeight: 1.15 }}>{project.name}</h1>
             {project.description && (
-              <p style={{ fontSize: "14px", color: "var(--subtle-fg)", marginTop: "4px" }}>{project.description}</p>
+              <p style={{ fontSize: "13px", color: "var(--muted-fg)", marginTop: "4px" }}>{project.description}</p>
             )}
           </div>
         </div>

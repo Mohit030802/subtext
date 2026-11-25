@@ -36,12 +36,12 @@ function GoogleDriveLogo({ size = 16 }) {
 
 function getFormatBadge(mimeType = "") {
   if (mimeType.includes("pdf")) {
-    return { label: "PDF", color: "#f87171", bg: "rgba(248, 113, 113, 0.1)" };
+    return { label: "PDF", color: "var(--red)", bg: "var(--red-dim)", border: "var(--red-border)" };
   }
   if (mimeType.includes("word") || mimeType.includes("document")) {
-    return { label: "DOCX", color: "#60a5fa", bg: "rgba(96, 165, 250, 0.1)" };
+    return { label: "DOCX", color: "var(--blue)", bg: "var(--blue-dim)", border: "var(--border)" };
   }
-  return { label: "DOC", color: "#9ca3af", bg: "rgba(156, 163, 175, 0.1)" };
+  return { label: "DOC", color: "var(--text-2)", bg: "var(--surface-xs)", border: "var(--border)" };
 }
 
 export default function SmartDriveDiscoveryModal({
@@ -189,6 +189,16 @@ export default function SmartDriveDiscoveryModal({
     router.refresh();
   };
 
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !mounted) return null;
 
   const importedCount = Object.values(importStatus).filter(s => s === "imported").length;
@@ -198,109 +208,147 @@ export default function SmartDriveDiscoveryModal({
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        backdropFilter: "blur(6px)",
-        WebkitBackdropFilter: "blur(6px)",
+        backgroundColor: "rgba(24, 24, 27, 0.42)",
+        backdropFilter: "blur(3px)",
+        WebkitBackdropFilter: "blur(3px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         zIndex: 999999,
-        padding: "20px",
+        padding: "24px",
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
+        className="fade-up"
         style={{
           background: "var(--card)",
-          border: "1px solid var(--border)",
-          borderRadius: "12px",
+          border: "1px solid var(--border-hover)",
+          borderRadius: "10px",
           width: "100%",
-          maxWidth: "620px",
-          height: "78vh",
-          maxHeight: "680px",
+          maxWidth: "660px",
+          height: "76vh",
+          maxHeight: "660px",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6)",
+          boxShadow: "0 24px 60px rgba(24, 24, 27, 0.18)",
           overflow: "hidden",
         }}
       >
-        {/* ── Modal Header ── */}
+        {/* ── Editorial Modal Header ── */}
         <div
           style={{
-            padding: "16px 20px",
+            padding: "20px 24px 16px",
             borderBottom: "1px solid var(--border)",
+            background: "var(--bg)",
             display: "flex",
-            alignItems: "center",
+            alignItems: "flex-start",
             justifyContent: "space-between",
+            gap: "16px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
             <div
               style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "6px",
-                background: "var(--surface-sm)",
+                width: "36px",
+                height: "36px",
+                borderRadius: "8px",
+                background: "var(--card)",
                 border: "1px solid var(--border)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                marginTop: "2px",
+                flexShrink: 0,
               }}
             >
-              <GoogleDriveLogo size={16} />
+              <GoogleDriveLogo size={18} />
             </div>
             <div>
-              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--fg)", margin: 0, lineHeight: 1.2 }}>
-                Import Documents
-              </h2>
-              <div style={{ fontSize: "12px", color: "var(--text-3)", marginTop: "2px" }}>
-                Target: <span style={{ color: "var(--text-1)", fontWeight: 500 }}>{projectName}</span>
+              <div
+                style={{
+                  fontSize: "10.5px",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--primary)",
+                  marginBottom: "3px",
+                }}
+              >
+                Google Drive Import
               </div>
+              <h2
+                className="font-serif-editorial"
+                style={{
+                  fontSize: "22px",
+                  fontWeight: 400,
+                  color: "var(--fg)",
+                  margin: 0,
+                  lineHeight: 1.15,
+                }}
+              >
+                Import into {projectName}
+              </h2>
+              {clientName && (
+                <div style={{ fontSize: "12px", color: "var(--muted-fg)", marginTop: "3px" }}>
+                  Client: <span style={{ color: "var(--text-2)", fontWeight: 500 }}>{clientName}</span>
+                </div>
+              )}
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close"
             style={{
-              background: "transparent",
-              border: "none",
-              color: "var(--text-3)",
+              background: "var(--card)",
+              border: "1px solid var(--border)",
+              color: "var(--muted-fg)",
               cursor: "pointer",
-              padding: "4px",
+              width: "30px",
+              height: "30px",
               borderRadius: "6px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              transition: "all 0.12s",
             }}
-            onMouseEnter={e => e.currentTarget.style.color = "var(--fg)"}
-            onMouseLeave={e => e.currentTarget.style.color = "var(--text-3)"}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--fg)";
+              e.currentTarget.style.borderColor = "var(--border-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--muted-fg)";
+              e.currentTarget.style.borderColor = "var(--border)";
+            }}
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
 
-        {/* ── Search Bar & View Tabs ── */}
-        <div style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "10px" }}>
-          {/* Search Input */}
+        {/* ── Search Bar & Hairline Tabs ── */}
+        <div style={{ padding: "14px 24px 0", borderBottom: "1px solid var(--border)", background: "var(--card)" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "8px",
-              background: "var(--surface-sm)",
+              gap: "10px",
+              background: "var(--surface-xs)",
               border: "1px solid var(--border)",
-              borderRadius: "6px",
-              padding: "7px 12px",
+              borderRadius: "7px",
+              padding: "9px 12px",
+              marginBottom: searchQuery ? "14px" : "10px",
             }}
           >
-            <Search size={14} color="var(--text-3)" style={{ flexShrink: 0 }} />
+            <Search size={14} color="var(--muted-fg)" style={{ flexShrink: 0 }} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search contracts, NDAs, proposals in Google Drive…"
+              placeholder="Search contracts, NDAs, or proposals by title…"
               style={{
                 background: "transparent",
                 border: "none",
@@ -315,62 +363,55 @@ export default function SmartDriveDiscoveryModal({
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                style={{ background: "transparent", border: "none", color: "var(--text-3)", cursor: "pointer", padding: "2px" }}
+                style={{ background: "transparent", border: "none", color: "var(--muted-fg)", cursor: "pointer", padding: "2px", display: "flex" }}
               >
                 <X size={13} />
               </button>
             )}
           </div>
 
-          {/* Segmented Control */}
           {!searchQuery && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div
-                style={{
-                  display: "inline-flex",
-                  padding: "2px",
-                  borderRadius: "6px",
-                  background: "var(--surface-sm)",
-                  border: "1px solid var(--border)",
-                  gap: "2px",
-                }}
-              >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
                 <button
                   type="button"
                   onClick={() => setActiveTab("suggested")}
                   style={{
-                    padding: "4px 12px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    fontWeight: 500,
+                    padding: "8px 0 10px",
+                    fontSize: "12.5px",
+                    fontWeight: activeTab === "suggested" ? 600 : 500,
                     cursor: "pointer",
+                    background: "transparent",
                     border: "none",
-                    background: activeTab === "suggested" ? "var(--card)" : "transparent",
-                    color: activeTab === "suggested" ? "var(--fg)" : "var(--text-3)",
-                    boxShadow: activeTab === "suggested" ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
-                    transition: "all 0.1s ease",
+                    borderBottom: activeTab === "suggested" ? "2px solid var(--primary)" : "2px solid transparent",
+                    color: activeTab === "suggested" ? "var(--primary)" : "var(--muted-fg)",
+                    transition: "all 0.12s ease",
+                    fontFamily: "inherit",
                   }}
                 >
-                  Matching &ldquo;{projectName}&rdquo; ({suggestedFiles.length})
+                  Matching &ldquo;{projectName}&rdquo;{" "}
+                  <span className="font-mono" style={{ fontSize: "11px", opacity: 0.8 }}>
+                    ({suggestedFiles.length})
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActiveTab("all")}
                   style={{
-                    padding: "4px 12px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    fontWeight: 500,
+                    padding: "8px 0 10px",
+                    fontSize: "12.5px",
+                    fontWeight: activeTab === "all" ? 600 : 500,
                     cursor: "pointer",
+                    background: "transparent",
                     border: "none",
-                    background: activeTab === "all" ? "var(--card)" : "transparent",
-                    color: activeTab === "all" ? "var(--fg)" : "var(--text-3)",
-                    boxShadow: activeTab === "all" ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
-                    transition: "all 0.1s ease",
+                    borderBottom: activeTab === "all" ? "2px solid var(--primary)" : "2px solid transparent",
+                    color: activeTab === "all" ? "var(--primary)" : "var(--muted-fg)",
+                    transition: "all 0.12s ease",
+                    fontFamily: "inherit",
                   }}
                 >
-                  All Google Drive Contracts
+                  All Drive Files
                 </button>
               </div>
 
@@ -379,18 +420,13 @@ export default function SmartDriveDiscoveryModal({
                   type="button"
                   onClick={handleImportAll}
                   disabled={importingAll}
+                  className="btn btn-primary"
                   style={{
                     padding: "4px 10px",
-                    borderRadius: "6px",
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    background: "var(--primary)",
-                    color: "#ffffff",
-                    border: "none",
+                    fontSize: "11.5px",
+                    marginBottom: "6px",
+                    opacity: importingAll ? 0.7 : 1,
                     cursor: importingAll ? "not-allowed" : "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
                   }}
                 >
                   {importingAll ? <Loader2 size={11} style={{ animation: "spin 1s linear infinite" }} /> : null}
@@ -401,16 +437,16 @@ export default function SmartDriveDiscoveryModal({
           )}
         </div>
 
-        {/* ── Files Stream ── */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "10px 20px" }}>
+        {/* ── Ledger-Style Files Stream ── */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
           {loading ? (
-            <div style={{ padding: "40px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "10px", color: "var(--text-3)" }}>
-              <Loader2 size={22} style={{ animation: "spin 1s linear infinite", color: "var(--primary)" }} />
-              <span style={{ fontSize: "12px" }}>Connecting to Google Drive…</span>
+            <div style={{ padding: "56px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "10px", color: "var(--muted-fg)" }}>
+              <Loader2 size={20} style={{ animation: "spin 1s linear infinite", color: "var(--primary)" }} />
+              <span style={{ fontSize: "12.5px" }}>Querying Google Drive metadata…</span>
             </div>
           ) : error ? (
-            <div style={{ padding: "30px 20px", textAlign: "center", color: "var(--red)" }}>
-              <div style={{ fontSize: "13px", fontWeight: 500 }}>{error}</div>
+            <div style={{ padding: "40px 24px", textAlign: "center" }}>
+              <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--red)", marginBottom: "12px" }}>{error}</div>
               <button
                 type="button"
                 onClick={() => {
@@ -422,26 +458,26 @@ export default function SmartDriveDiscoveryModal({
                     .finally(() => setLoading(false));
                 }}
                 className="btn btn-secondary"
-                style={{ marginTop: "12px", fontSize: "12px", padding: "4px 12px" }}
+                style={{ fontSize: "12px" }}
               >
                 <RefreshCw size={12} /> Retry
               </button>
             </div>
           ) : currentFiles.length === 0 ? (
-            <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--text-3)" }}>
-              <FileText size={28} style={{ opacity: 0.3, margin: "0 auto 10px" }} />
-              <div style={{ fontSize: "13px", color: "var(--text-2)", fontWeight: 500 }}>
+            <div style={{ padding: "52px 24px", textAlign: "center", color: "var(--muted-fg)" }}>
+              <FileText size={26} style={{ opacity: 0.35, margin: "0 auto 10px" }} />
+              <div style={{ fontSize: "13.5px", color: "var(--fg)", fontWeight: 500 }}>
                 {searchQuery
                   ? `No documents found matching "${searchQuery}"`
-                  : `No contract files matching "${projectName}" found in Drive`}
+                  : `No files matching "${projectName}" found in Drive`}
               </div>
-              <p style={{ fontSize: "12px", color: "var(--text-3)", marginTop: "4px" }}>
-                Try searching any keyword above or switch to &ldquo;All Google Drive Contracts&rdquo;.
+              <p style={{ fontSize: "12px", color: "var(--muted-fg)", marginTop: "4px" }}>
+                Search any keyword above or switch to &ldquo;All Drive Files&rdquo;.
               </p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {currentFiles.map((file) => {
+            <div>
+              {currentFiles.map((file, idx) => {
                 const badge = getFormatBadge(file.mimeType);
                 const status = importStatus[file.id] || "idle";
 
@@ -452,33 +488,27 @@ export default function SmartDriveDiscoveryModal({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--border)",
-                      background: "var(--surface-sm)",
-                      gap: "12px",
-                      transition: "all 0.12s ease",
+                      padding: "13px 24px",
+                      borderBottom: idx < currentFiles.length - 1 ? "1px solid var(--border)" : "none",
+                      background: "var(--card)",
+                      gap: "14px",
+                      transition: "background 0.12s ease",
                     }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = "var(--border-hover)";
-                      e.currentTarget.style.background = "var(--surface-md)";
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = "var(--border)";
-                      e.currentTarget.style.background = "var(--surface-sm)";
-                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-xs)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--card)"; }}
                   >
-                    {/* Left: format pill + title + meta */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flex: 1 }}>
+                    {/* Left: format tag + title + metadata */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0, flex: 1 }}>
                       <span
+                        className="font-mono"
                         style={{
                           fontSize: "10px",
                           fontWeight: 700,
-                          padding: "2px 6px",
+                          padding: "3px 7px",
                           borderRadius: "4px",
                           background: badge.bg,
                           color: badge.color,
-                          fontFamily: "var(--font-mono)",
+                          border: `1px solid ${badge.border}`,
                           flexShrink: 0,
                         }}
                       >
@@ -499,23 +529,23 @@ export default function SmartDriveDiscoveryModal({
                         >
                           {file.name}
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px", fontSize: "11px", color: "var(--text-3)" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px", fontSize: "11.5px", color: "var(--muted-fg)" }}>
                           {file.isExactMatch && (
-                            <span style={{ color: "#fbbf24", fontWeight: 500 }}>Exact match</span>
+                            <span style={{ color: "var(--primary)", fontWeight: 600 }}>Exact match</span>
                           )}
-                          <span>Updated {formatModifiedDate(file.modifiedTime)}</span>
-                          {file.size && <span>· {formatBytes(file.size)}</span>}
+                          <span className="font-mono">Updated {formatModifiedDate(file.modifiedTime)}</span>
+                          {file.size && <span className="font-mono">· {formatBytes(file.size)}</span>}
                         </div>
                       </div>
                     </div>
 
-                    {/* Right: Import action */}
+                    {/* Right: Import button */}
                     <button
                       type="button"
                       onClick={() => handleImportSingle(file)}
                       disabled={status === "importing" || status === "imported"}
                       style={{
-                        padding: "5px 12px",
+                        padding: "6px 12px",
                         borderRadius: "6px",
                         fontSize: "12px",
                         fontWeight: 500,
@@ -524,31 +554,38 @@ export default function SmartDriveDiscoveryModal({
                         alignItems: "center",
                         gap: "5px",
                         flexShrink: 0,
-                        border: status === "imported" ? "1px solid rgba(52, 211, 153, 0.3)" : "1px solid var(--border)",
-                        background: status === "imported"
-                          ? "rgba(52, 211, 153, 0.1)"
-                          : status === "importing"
-                          ? "var(--surface-md)"
-                          : "var(--card)",
-                        color: status === "imported" ? "#34d399" : "var(--fg)",
+                        fontFamily: "inherit",
+                        border:
+                          status === "imported"
+                            ? "1px solid var(--green-border)"
+                            : "1px solid var(--border)",
+                        background:
+                          status === "imported"
+                            ? "var(--green-dim)"
+                            : status === "importing"
+                            ? "var(--surface-sm)"
+                            : "var(--card)",
+                        color: status === "imported" ? "var(--green)" : "var(--fg)",
                         transition: "all 0.12s",
                       }}
-                      onMouseEnter={e => {
+                      onMouseEnter={(e) => {
                         if (status === "idle") {
-                          e.currentTarget.style.borderColor = "var(--border-hover)";
-                          e.currentTarget.style.background = "var(--surface-md)";
+                          e.currentTarget.style.borderColor = "var(--primary)";
+                          e.currentTarget.style.background = "var(--primary)";
+                          e.currentTarget.style.color = "#ffffff";
                         }
                       }}
-                      onMouseLeave={e => {
+                      onMouseLeave={(e) => {
                         if (status === "idle") {
                           e.currentTarget.style.borderColor = "var(--border)";
                           e.currentTarget.style.background = "var(--card)";
+                          e.currentTarget.style.color = "var(--fg)";
                         }
                       }}
                     >
                       {status === "imported" ? (
                         <>
-                          <Check size={12} color="#34d399" />
+                          <Check size={12} />
                           <span>Imported</span>
                         </>
                       ) : status === "importing" ? (
@@ -559,7 +596,7 @@ export default function SmartDriveDiscoveryModal({
                       ) : (
                         <>
                           <span>Import</span>
-                          <ArrowRight size={12} style={{ opacity: 0.6 }} />
+                          <ArrowRight size={12} />
                         </>
                       )}
                     </button>
@@ -573,32 +610,25 @@ export default function SmartDriveDiscoveryModal({
         {/* ── Footer ── */}
         <div
           style={{
-            padding: "12px 20px",
+            padding: "12px 24px",
             borderTop: "1px solid var(--border)",
-            background: "var(--surface-xs)",
+            background: "var(--bg)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            gap: "12px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "var(--text-3)" }}>
-            <Lock size={12} style={{ flexShrink: 0, opacity: 0.6 }} />
-            <span>Metadata query only. File contents are downloaded only after you click import.</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "var(--muted-fg)" }}>
+            <Lock size={12} style={{ flexShrink: 0, color: "var(--primary)" }} />
+            <span>Metadata query only · File contents are accessed only after you click Import.</span>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "6px",
-              background: importedCount > 0 ? "var(--primary)" : "var(--surface-sm)",
-              border: "1px solid var(--border)",
-              color: importedCount > 0 ? "#ffffff" : "var(--fg)",
-              fontSize: "12px",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
+            className={importedCount > 0 ? "btn btn-primary" : "btn btn-secondary"}
+            style={{ padding: "6px 14px", fontSize: "12px" }}
           >
             {importedCount > 0 ? "Done" : "Close"}
           </button>
