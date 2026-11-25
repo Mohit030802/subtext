@@ -34,10 +34,10 @@ export default function RisksTab({ clauseRisks, onScrollToClause, activeRiskId }
             style={{
               animationDelay: `${i * 0.05}s`,
               background: "var(--card)",
-              border: isViewing ? "1px solid #7c3aed" : `1px solid ${cfg.border}`,
-              borderLeft: `3px solid ${isViewing ? "#7c3aed" : cfg.left}`,
+              border: isViewing ? "1px solid var(--primary)" : `1px solid ${cfg.border}`,
+              borderLeft: `3px solid ${isViewing ? "var(--primary)" : cfg.left}`,
               borderRadius: "8px",
-              boxShadow: isViewing ? "0 0 0 1px #7c3aed, 0 4px 14px rgba(124, 58, 237, 0.12)" : "none",
+              boxShadow: isViewing ? "0 0 0 1px var(--primary), 0 4px 14px var(--primary-dim)" : "none",
               overflow: "hidden",
               transition: "all 0.15s ease",
             }}
@@ -46,14 +46,14 @@ export default function RisksTab({ clauseRisks, onScrollToClause, activeRiskId }
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "10px 14px", borderBottom: "1px solid var(--border)",
-              background: isViewing ? "rgba(124, 58, 237, 0.08)" : cfg.bg,
+              background: isViewing ? "var(--primary-dim)" : cfg.bg,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span className="risk-pill" style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
                   <span className="risk-pill-dot" style={{ background: cfg.color }} />
                   {risk.risk_level}
                 </span>
-                <span style={{ fontSize: "11px", color: isViewing ? "#a78bfa" : "var(--subtle-fg)", fontWeight: isViewing ? 600 : 400 }}>
+                <span style={{ fontSize: "11px", color: isViewing ? "var(--fg)" : "var(--subtle-fg)", fontWeight: isViewing ? 600 : 400 }}>
                   Page {risk.page_number || 1}
                 </span>
               </div>
@@ -63,9 +63,9 @@ export default function RisksTab({ clauseRisks, onScrollToClause, activeRiskId }
                 style={{
                   display: "flex", alignItems: "center", gap: "5px",
                   fontSize: "11px", fontWeight: isViewing ? 600 : 500, padding: "4px 9px", borderRadius: "5px",
-                  background: isViewing ? "rgba(124, 58, 237, 0.2)" : "var(--surface-sm)",
-                  border: isViewing ? "1px solid #7c3aed" : "1px solid var(--border)",
-                  color: isViewing ? "#c4b5fd" : "var(--muted-fg)",
+                  background: isViewing ? "var(--primary-dim)" : "var(--surface-sm)",
+                  border: isViewing ? "1px solid var(--primary)" : "1px solid var(--border)",
+                  color: isViewing ? "var(--fg)" : "var(--muted-fg)",
                   cursor: "pointer", transition: "all 0.12s",
                 }}
                 onMouseEnter={e => {

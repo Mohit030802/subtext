@@ -92,7 +92,7 @@ export default function UpcomingObligations({ obligations }) {
                             display: "flex", alignItems: "center", gap: "4px",
                             transition: "color 0.12s",
                           }}
-                            onMouseEnter={e => e.currentTarget.style.color = "#c4b5fd"}
+                            onMouseEnter={e => e.currentTarget.style.color = "var(--fg)"}
                             onMouseLeave={e => e.currentTarget.style.color = "var(--text-2)"}
                           >
                             {obl.title}

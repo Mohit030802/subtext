@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Logo from "@/components/ui/Logo";
 import {
   LayoutDashboard, Users, ChevronDown,
-  FileText, FolderOpen, Building2, Plus, Zap, LogOut, Coffee,
+  FileText, FolderOpen, Building2, Plus, LogOut, Coffee,
 } from "lucide-react";
+import SmartDriveDiscoveryModal from "@/components/drive/SmartDriveDiscoveryModal";
 
 const RISK_COLORS = {
   HIGH:   "#f87171",
@@ -55,32 +56,83 @@ function DocNode({ doc, clientId, projectId }) {
   );
 }
 
-function ProjectNode({ project, clientId }) {
+function ProjectNode({ project, clientId, clientName, onAddDoc }) {
   const [open, setOpen] = useState(true);
+  const [hovered, setHovered] = useState(false);
   const hasDocs = project.documents?.length > 0;
 
   return (
-    <div>
-      <button
-        onClick={() => setOpen(v => !v)}
-        style={{
-          display: "flex", alignItems: "center", gap: "6px",
-          width: "100%", padding: "5px 8px", borderRadius: "5px",
-          fontSize: "12px", color: "var(--sidebar-fg)", background: "transparent",
-          border: "none", cursor: "pointer", transition: "all 0.12s", textAlign: "left",
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = "var(--surface-sm)"}
-        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-      >
-        {hasDocs
-          ? <ChevronDown size={11} style={{ opacity: 0.4, transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s", flexShrink: 0 }} />
-          : <span style={{ width: 11 }} />
-        }
-        <FolderOpen size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-        <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {project.name}
-        </span>
-      </button>
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ marginBottom: "1px" }}
+    >
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <button
+          onClick={() => setOpen(v => !v)}
+          style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            flex: 1, minWidth: 0, padding: "5px 6px 5px 8px", borderRadius: "5px",
+            fontSize: "12px", color: "var(--sidebar-fg)", background: "transparent",
+            border: "none", cursor: "pointer", transition: "all 0.12s", textAlign: "left",
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--surface-sm)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+        >
+          {hasDocs
+            ? <ChevronDown size={11} style={{ opacity: 0.4, transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s", flexShrink: 0 }} />
+            : <span style={{ width: 11 }} />
+          }
+          <FolderOpen size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {project.name}
+          </span>
+        </button>
+
+        {/* Add Document '+' button directly next to project name */}
+        <button
+          type="button"
+          title={`Add document to ${project.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onAddDoc) {
+              onAddDoc({
+                projectId: project.id,
+                projectName: project.name,
+                clientId,
+                clientName,
+              });
+            }
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "18px",
+            height: "18px",
+            borderRadius: "4px",
+            background: "transparent",
+            border: "none",
+            color: "var(--text-3)",
+            cursor: "pointer",
+            opacity: hovered ? 1 : 0,
+            transition: "all 0.12s ease",
+            marginRight: "4px",
+            flexShrink: 0,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--surface-md)";
+            e.currentTarget.style.color = "var(--fg)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "var(--text-3)";
+          }}
+        >
+          <Plus size={11} />
+        </button>
+      </div>
+
       {open && hasDocs && (
         <div style={{ marginLeft: "16px", marginTop: "1px" }}>
           {project.documents.map(doc => (
@@ -92,7 +144,7 @@ function ProjectNode({ project, clientId }) {
   );
 }
 
-function ClientNode({ client }) {
+function ClientNode({ client, onAddDoc }) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -122,7 +174,13 @@ function ClientNode({ client }) {
       {open && (
         <div style={{ marginLeft: "16px", marginTop: "2px", marginBottom: "2px" }}>
           {client.projects?.map(p => (
-            <ProjectNode key={p.id} project={p} clientId={client.id} />
+            <ProjectNode
+              key={p.id}
+              project={p}
+              clientId={client.id}
+              clientName={client.name}
+              onAddDoc={onAddDoc}
+            />
           ))}
           {(!client.projects || client.projects.length === 0) && (
             <div style={{ fontSize: "11px", color: "var(--subtle-fg)", padding: "4px 8px", fontStyle: "italic" }}>
@@ -139,6 +197,18 @@ export default function Sidebar({ navTree = [] }) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
+  const [addDocTarget, setAddDocTarget] = useState(null);
+
+  useEffect(() => {
+    const handleOpen = (e) => {
+      if (e.detail?.projectId) {
+        setAddDocTarget(e.detail);
+      }
+    };
+    window.addEventListener("subtext:open-add-doc", handleOpen);
+    return () => window.removeEventListener("subtext:open-add-doc", handleOpen);
+  }, []);
+
   const user = session?.user;
   const initials = user?.name
     ? user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
@@ -180,7 +250,7 @@ export default function Sidebar({ navTree = [] }) {
               key={href}
               href={href}
               className="nav-item"
-              style={active ? { background: "var(--sidebar-accent)", color: "#c4b5fd" } : {}}
+              style={active ? { background: "var(--sidebar-accent)", color: "var(--fg)", fontWeight: 500 } : {}}
             >
               {active && (
                 <span style={{
@@ -221,7 +291,7 @@ export default function Sidebar({ navTree = [] }) {
           </div>
         ) : (
           navTree.map(client => (
-            <ClientNode key={client.id} client={client} />
+            <ClientNode key={client.id} client={client} onAddDoc={setAddDocTarget} />
           ))
         )}
 
@@ -291,10 +361,10 @@ export default function Sidebar({ navTree = [] }) {
           ) : (
             <div style={{
               width: "28px", height: "28px", borderRadius: "50%",
-              background: "rgba(124,58,237,0.2)",
-              border: "1px solid rgba(124,58,237,0.3)",
+              background: "var(--surface-md)",
+              border: "1px solid var(--border)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "11px", fontWeight: 700, color: "#a78bfa", flexShrink: 0,
+              fontSize: "11px", fontWeight: 600, color: "var(--fg)", flexShrink: 0,
             }}>{initials}</div>
           )}
 
@@ -324,6 +394,20 @@ export default function Sidebar({ navTree = [] }) {
           </button>
         </div>
       </div>
+
+      {/* Smart Drive Agent Modal triggered from '+' next to any project */}
+      {addDocTarget && (
+        <SmartDriveDiscoveryModal
+          projectId={addDocTarget.projectId}
+          projectName={addDocTarget.projectName}
+          clientName={addDocTarget.clientName}
+          isOpen={!!addDocTarget}
+          onClose={() => setAddDocTarget(null)}
+          onDocumentImported={() => {
+            router.refresh();
+          }}
+        />
+      )}
     </aside>
   );
 }

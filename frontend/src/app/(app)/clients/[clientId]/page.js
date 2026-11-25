@@ -1,6 +1,8 @@
 import { api } from "@/lib/api";
 import ClientDetailsPageContent from "./ClientDetailsPageContent";
 
+export const dynamic = "force-dynamic";
+
 export default async function ClientPage({ params }) {
   const { clientId } = await params;
   let client = null;

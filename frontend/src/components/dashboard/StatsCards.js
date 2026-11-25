@@ -28,8 +28,8 @@ const CARDS_CONFIG = [
     label: "Documents",
     sublabel: "Total analyzed",
     icon: FileText,
-    accent: "#7c3aed",
-    accentBg: "rgba(124,58,237,0.1)",
+    accent: "#6366f1",
+    accentBg: "rgba(99,102,241,0.1)",
     href: "/clients",
   },
   {

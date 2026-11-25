@@ -78,14 +78,14 @@ export default function ProcessDocumentPanel({ documentId, initialStatus }) {
           ? "rgba(251,191,36,0.1)"
           : isFailed
           ? "rgba(248,113,113,0.1)"
-          : "rgba(124,58,237,0.12)",
-        border: `1px solid ${isProcessing ? "rgba(251,191,36,0.2)" : isFailed ? "rgba(248,113,113,0.2)" : "rgba(124,58,237,0.25)"}`,
+          : "rgba(99,102,241,0.1)",
+        border: `1px solid ${isProcessing ? "rgba(251,191,36,0.2)" : isFailed ? "rgba(248,113,113,0.2)" : "rgba(99,102,241,0.25)"}`,
       }}>
         {isProcessing
           ? <Loader2 size={24} color="#fbbf24" style={{ animation: "spin 1.2s linear infinite" }} />
           : isFailed
           ? <AlertTriangle size={24} color="#f87171" />
-          : <Zap size={24} color="#7c3aed" />
+          : <Zap size={24} color="#6366f1" />
         }
       </div>
 
@@ -132,8 +132,8 @@ export default function ProcessDocumentPanel({ documentId, initialStatus }) {
           style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
             padding: "10px 22px", borderRadius: "9px", border: "none", cursor: loading ? "not-allowed" : "pointer",
-            background: isFailed ? "#7c3aed" : "#7c3aed",
-            color: "#fff", fontSize: "13px", fontWeight: 700,
+            background: "var(--primary)",
+            color: "#fff", fontSize: "13px", fontWeight: 500,
             opacity: loading ? 0.7 : 1, transition: "opacity 0.15s",
             fontFamily: "inherit",
           }}

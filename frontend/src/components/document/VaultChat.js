@@ -27,10 +27,10 @@ function Message({ msg }) {
       {!isUser && (
         <div style={{
           width: "26px", height: "26px", borderRadius: "50%", flexShrink: 0,
-          background: "var(--primary-dim)", border: "1px solid rgba(124,58,237,0.25)",
+          background: "var(--primary-dim)", border: "1px solid var(--border)",
           display: "flex", alignItems: "center", justifyContent: "center", marginTop: "2px",
         }}>
-          <Sparkles size={12} color="#a78bfa" />
+          <Sparkles size={12} color="var(--primary)" />
         </div>
       )}
 
@@ -39,7 +39,7 @@ function Message({ msg }) {
         padding: "10px 13px",
         borderRadius: isUser ? "12px 12px 3px 12px" : "3px 12px 12px 12px",
         fontSize: "12px", lineHeight: 1.65,
-        background: isUser ? "#7c3aed" : "var(--card)",
+        background: isUser ? "var(--primary)" : "var(--card)",
         border: isUser ? "none" : "1px solid var(--border)",
         color: isUser ? "#fff" : "var(--text-3)",
       }}>
@@ -52,8 +52,8 @@ function Message({ msg }) {
             {msg.citations.map(c => (
               <span key={c.chunk_id} style={{
                 fontSize: "10px", padding: "2px 7px", borderRadius: "4px", cursor: "pointer",
-                border: "1px solid rgba(124,58,237,0.25)", color: "#a78bfa",
-                background: "rgba(124,58,237,0.08)", fontWeight: 500,
+                border: "1px solid var(--border)", color: "var(--primary)",
+                background: "var(--primary-dim)", fontWeight: 500,
               }}>p.{c.page}</span>
             ))}
           </div>
@@ -63,9 +63,9 @@ function Message({ msg }) {
       {isUser && (
         <div style={{
           width: "26px", height: "26px", borderRadius: "50%", flexShrink: 0,
-          background: "#7c3aed20", border: "1px solid rgba(124,58,237,0.3)",
+          background: "var(--surface-md)", border: "1px solid var(--border)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "11px", fontWeight: 700, color: "#a78bfa", marginTop: "2px",
+          fontSize: "11px", fontWeight: 600, color: "var(--fg)", marginTop: "2px",
         }}>U</div>
       )}
     </div>
@@ -96,12 +96,12 @@ export default function VaultChat({ messages, documentTitle }) {
       {/* Scope bar */}
       <div style={{
         padding: "8px 16px", borderBottom: "1px solid var(--border)",
-        background: "rgba(124,58,237,0.04)",
+        background: "var(--surface-xs)",
         display: "flex", alignItems: "center", gap: "7px",
       }}>
-        <Sparkles size={12} color="#7c3aed" />
-        <span style={{ fontSize: "11px", color: "#8b5cf6" }}>
-          Chatting about: <strong style={{ fontWeight: 600 }}>{documentTitle}</strong>
+        <Sparkles size={12} color="var(--primary)" />
+        <span style={{ fontSize: "11px", color: "var(--text-3)" }}>
+          Chatting about: <strong style={{ fontWeight: 600, color: "var(--fg)" }}>{documentTitle}</strong>
         </span>
       </div>
 
@@ -135,7 +135,7 @@ export default function VaultChat({ messages, documentTitle }) {
             disabled={!input.trim()}
             style={{
               width: "32px", height: "32px", borderRadius: "7px",
-              background: input.trim() ? "#7c3aed" : "var(--surface-sm)",
+              background: input.trim() ? "var(--primary)" : "var(--surface-sm)",
               border: "none", cursor: input.trim() ? "pointer" : "default",
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "all 0.15s", flexShrink: 0,

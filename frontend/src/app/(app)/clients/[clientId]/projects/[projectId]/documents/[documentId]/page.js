@@ -3,6 +3,8 @@ import DocumentWorkspace from "@/components/document/DocumentWorkspace";
 import EmptyState from "@/components/ui/EmptyState";
 import { AlertTriangle } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function DocumentPage({ params, searchParams }) {
   const { clientId, projectId, documentId } = await params;
   const { version } = await searchParams;

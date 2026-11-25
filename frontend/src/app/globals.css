@@ -38,92 +38,94 @@
 
 /* ── Token System ── */
 :root {
-  --font-inter: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-inter: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   /* Backgrounds */
   --bg:           #09090b;
-  --surface:      #111113;
-  --card:         #18181b;
-  --card-hover:   #1f1f23;
-  --overlay:      #27272a;
+  --surface:      #111114;
+  --card:         #121215;
+  --card-hover:   #17171c;
+  --overlay:      #222226;
 
   /* Text */
-  --fg:           #fafafa;
-  --text-1:       #e4e4e7;   /* secondary headings, section titles */
+  --fg:           #f4f4f5;
+  --text-1:       #f4f4f5;   /* primary headings, titles */
   --text-2:       #d4d4d8;   /* body text, list items */
   --text-3:       #a1a1aa;   /* labels, metadata */
   --muted-fg:     #71717a;
   --subtle-fg:    #52525b;
 
   /* Borders */
-  --border:       rgba(255,255,255,0.06);
-  --border-hover: rgba(255,255,255,0.12);
+  --border:       rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.15);
 
-  /* Brand */
-  --primary:      #7c3aed;
-  --primary-dim:  rgba(124,58,237,0.15);
+  /* Brand - Refined Indigo (Linear / Tailwind 600) */
+  --primary:        #4f46e5;
+  --primary-hover:  #4338ca;
+  --primary-dim:    rgba(79, 70, 229, 0.12);
 
   /* Semantic colors */
   --red:          #f87171;
-  --red-dim:      rgba(248,113,113,0.12);
+  --red-dim:      rgba(248,113,113,0.10);
   --amber:        #fbbf24;
-  --amber-dim:    rgba(251,191,36,0.12);
+  --amber-dim:    rgba(251,191,36,0.10);
   --green:        #34d399;
-  --green-dim:    rgba(52,211,153,0.12);
+  --green-dim:    rgba(52,211,153,0.10);
   --blue:         #60a5fa;
-  --blue-dim:     rgba(96,165,250,0.12);
-  --purple:       #a78bfa;
-  --purple-dim:   rgba(167,139,250,0.12);
+  --blue-dim:     rgba(96,165,250,0.10);
+  --purple:       #818cf8;
+  --purple-dim:   rgba(129,140,248,0.10);
 
   /* Sidebar */
-  --sidebar-bg:     #0d0d10;
+  --sidebar-bg:     #09090b;
   --sidebar-fg:     #a1a1aa;
-  --sidebar-border: rgba(255,255,255,0.04);
-  --sidebar-accent: rgba(124,58,237,0.1);
-  --muted:          #18181b;
+  --sidebar-border: rgba(255,255,255,0.06);
+  --sidebar-accent: rgba(255,255,255,0.05);
+  --muted:          #121215;
 
   --radius: 8px;
 
-  /* Surface overlays — replace inline rgba(255,255,255,...) */
-  --surface-xs:     rgba(255,255,255,0.03);
+  /* Surface overlays */
+  --surface-xs:     rgba(255,255,255,0.025);
   --surface-sm:     rgba(255,255,255,0.04);
-  --surface-md:     rgba(255,255,255,0.06);
-  --surface-border: rgba(255,255,255,0.07);
+  --surface-md:     rgba(255,255,255,0.07);
+  --surface-border: rgba(255,255,255,0.08);
 }
 
 /* ── Light theme overrides (toggled via JS: html.light) ── */
 html.light {
-  --bg:           #f4f4f5;
+  --bg:           #f8fafc;
   --surface:      #ffffff;
   --card:         #ffffff;
-  --card-hover:   #f1f1f3;
-  --overlay:      #e4e4e7;
+  --card-hover:   #f1f5f9;
+  --overlay:      #e2e8f0;
 
-  --fg:           #09090b;
-  --text-1:       #18181b;
-  --text-2:       #27272a;
-  --text-3:       #52525b;
-  --muted-fg:     #71717a;
-  --subtle-fg:    #71717a;
+  --fg:           #0f172a;
+  --text-1:       #0f172a;
+  --text-2:       #334155;
+  --text-3:       #64748b;
+  --muted-fg:     #64748b;
+  --subtle-fg:    #94a3b8;
 
   --border:       rgba(0,0,0,0.08);
-  --border-hover: rgba(0,0,0,0.16);
+  --border-hover: rgba(0,0,0,0.15);
 
-  --primary:      #7c3aed;
-  --primary-dim:  rgba(124,58,237,0.1);
+  --primary:        #4f46e5;
+  --primary-hover:  #4338ca;
+  --primary-dim:    rgba(79, 70, 229, 0.08);
 
   --red-dim:      rgba(248,113,113,0.1);
   --amber-dim:    rgba(251,191,36,0.1);
   --green-dim:    rgba(52,211,153,0.1);
   --blue-dim:     rgba(96,165,250,0.1);
-  --purple-dim:   rgba(167,139,250,0.1);
+  --purple-dim:   rgba(129,140,248,0.1);
 
   --sidebar-bg:     #ffffff;
-  --sidebar-fg:     #3f3f46;
+  --sidebar-fg:     #475569;
   --sidebar-border: rgba(0,0,0,0.06);
-  --sidebar-accent: rgba(124,58,237,0.08);
-  --muted:          #f4f4f5;
+  --sidebar-accent: rgba(0,0,0,0.04);
+  --muted:          #f8fafc;
 
   /* Surface overlays */
   --surface-xs:     rgba(0,0,0,0.02);
@@ -151,9 +153,16 @@ html {
 body {
   background: var(--bg);
   color: var(--fg);
+  font-family: var(--font-inter);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
   line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6, .text-title {
+  letter-spacing: -0.025em;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 /* ── Scrollbar ── */
@@ -167,11 +176,11 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 
 /* ── Typography Utilities ── */
-.text-title   { font-size: 1.5rem;  font-weight: 700; letter-spacing: -0.03em; color: var(--fg); line-height: 1.2; }
-.text-heading { font-size: 0.9375rem; font-weight: 600; color: var(--fg); }
+.text-title   { font-size: 1.375rem;  font-weight: 600; letter-spacing: -0.025em; color: var(--fg); line-height: 1.25; }
+.text-heading { font-size: 0.9375rem; font-weight: 600; color: var(--fg); letter-spacing: -0.015em; }
 .text-label   { font-size: 0.75rem;  font-weight: 500; color: var(--muted-fg); }
-.text-micro   { font-size: 0.6875rem; font-weight: 500; color: var(--subtle-fg); letter-spacing: 0.04em; }
-.font-mono    { font-family: var(--font-mono), "JetBrains Mono", monospace; }
+.text-micro   { font-size: 0.6875rem; font-weight: 500; color: var(--subtle-fg); letter-spacing: 0.02em; }
+.font-mono    { font-family: var(--font-mono), monospace; }
 
 /* ── Component Primitives ── */
 .card {
@@ -187,28 +196,45 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: 0.8125rem;
   font-weight: 500;
   border-radius: 6px;
-  padding: 6px 12px;
-  transition: all 0.15s ease;
+  padding: 6px 14px;
+  transition: all 0.12s ease;
   cursor: pointer;
   border: 1px solid transparent;
-  line-height: 1;
+  line-height: 1.2;
+  font-family: inherit;
 }
 .btn-primary {
   background: var(--primary);
-  color: #fff;
-  border-color: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(0, 0, 0, 0.25);
 }
-.btn-primary:hover { background: #6d28d9; }
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+.btn-secondary {
+  background: var(--surface-sm);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+  background: var(--surface-md);
+  border-color: var(--border-hover);
+}
 .btn-ghost {
   background: transparent;
   color: var(--muted-fg);
-  border-color: var(--border);
+  border-color: transparent;
 }
-.btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--fg); border-color: var(--border-hover); }
+.btn-ghost:hover {
+  background: var(--surface-sm);
+  color: var(--fg);
+}
 
 /* ── Risk Pill ── */
 .risk-pill {
@@ -274,11 +300,11 @@ body {
   position: relative;
 }
 .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--fg); }
-.nav-item.active { background: var(--sidebar-accent); color: #c4b5fd; }
+.nav-item.active { background: rgba(255, 255, 255, 0.06); color: var(--fg); font-weight: 500; }
 .nav-item.active::before {
   content: '';
   position: absolute;
-  left: 0; top: 4px; bottom: 4px;
+  left: 0; top: 6px; bottom: 6px;
   width: 2px;
   background: var(--primary);
   border-radius: 0 2px 2px 0;
