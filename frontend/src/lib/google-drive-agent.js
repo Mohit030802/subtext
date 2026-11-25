@@ -4,18 +4,16 @@ import { getGoogleAccessToken, DRIVE_SCOPE } from "./google-auth";
 import { importDocument } from "./actions";
 
 /**
- * Categorize contract by filename and mime type.
+ * Categorize contract by filename into values allowed by documents_doc_type_check:
+ * ('NDA', 'MSA', 'SOW', 'SLA', 'HIRING', 'OTHER').
  */
-export function detectDocType(filename = "", mimeType = "") {
-  if (mimeType === "application/vnd.google-apps.document") return "AGREEMENT";
+export function detectDocType(filename = "") {
   const lower = filename.toLowerCase();
   if (lower.includes("nda") || lower.includes("non-disclosure") || lower.includes("confidential")) return "NDA";
   if (lower.includes("sow") || lower.includes("statement of work") || lower.includes("scope")) return "SOW";
   if (lower.includes("msa") || lower.includes("master service") || lower.includes("master agreement")) return "MSA";
-  if (lower.includes("lease") || lower.includes("tenancy") || lower.includes("rental")) return "LEASE";
-  if (lower.includes("employ") || lower.includes("offer letter") || lower.includes("contractor")) return "EMPLOYMENT";
   if (lower.includes("sla") || lower.includes("service level")) return "SLA";
-  if (lower.includes("proposal") || lower.includes("specification") || lower.includes("spec")) return "PROPOSAL";
+  if (lower.includes("employ") || lower.includes("offer letter") || lower.includes("contractor") || lower.includes("hiring")) return "HIRING";
   return "OTHER";
 }
 

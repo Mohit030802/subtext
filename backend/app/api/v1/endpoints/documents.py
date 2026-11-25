@@ -20,6 +20,21 @@ from app.services.document_processor import process_document_background
 
 router = APIRouter()
 
+ALLOWED_DOC_TYPES = {"NDA", "MSA", "SOW", "SLA", "HIRING", "OTHER"}
+DOC_TYPE_ALIASES = {
+    "EMPLOYMENT": "HIRING",
+    "CONTRACTOR": "HIRING",
+    "OFFER": "HIRING",
+}
+
+
+def normalize_doc_type(doc_type: str | None, fallback: str = "OTHER") -> str:
+    if not doc_type:
+        return fallback
+    normalized = doc_type.strip().upper()
+    normalized = DOC_TYPE_ALIASES.get(normalized, normalized)
+    return normalized if normalized in ALLOWED_DOC_TYPES else fallback
+
 async def verify_project_ownership(project_id: str, user_id: str, db: AsyncSession):
     stmt = select(Project).join(Client).where(Project.id == project_id, Client.user_id == user_id)
     result = await db.execute(stmt)
@@ -64,7 +79,7 @@ async def create_document(
         version_number=1,
         is_latest=True,
         title=doc_in.title,
-        doc_type=doc_in.doc_type or "OTHER",
+        doc_type=normalize_doc_type(doc_in.doc_type),
         google_drive_file_id=doc_in.google_drive_file_id,
         google_drive_view_url=doc_in.google_drive_view_url,
         google_drive_mime_type=doc_in.google_drive_mime_type,
@@ -193,7 +208,7 @@ async def create_document_version(
         is_latest=True,
         previous_version_id=latest.id,
         title=doc_in.title or latest.title,
-        doc_type=doc_in.doc_type or latest.doc_type,
+        doc_type=normalize_doc_type(doc_in.doc_type, fallback=latest.doc_type),
         google_drive_file_id=doc_in.google_drive_file_id,
         google_drive_view_url=doc_in.google_drive_view_url,
         google_drive_mime_type=doc_in.google_drive_mime_type,
