@@ -127,11 +127,10 @@ export default function Header({ navTree = [] }) {
   return (
     <>
       <header style={{
-        position: "fixed", top: 0, left: "240px", right: 0, height: "48px",
+        position: "fixed", top: 0, left: "240px", right: 0, height: "52px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 20px",
-        background: "rgba(9,9,11,0.85)",
-        backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+        padding: "0 24px",
+        background: "var(--bg)",
         borderBottom: "1px solid var(--border)",
         zIndex: 40,
       }}>

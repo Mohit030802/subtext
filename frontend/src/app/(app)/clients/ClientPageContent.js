@@ -33,13 +33,13 @@ export default function ClientPageContent({ clients = [], hasError }) {
   return (
     <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
       {/* Header */}
-      <div className="fade-up" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "24px" }}>
+      <div className="fade-up" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "24px", paddingBottom: "18px", borderBottom: "1px solid var(--border)" }}>
         <div>
-          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em" }}>
+          <h1 className="font-serif-editorial" style={{ fontSize: "28px", fontWeight: 400, color: "var(--fg)", margin: 0, lineHeight: 1.15 }}>
             Clients
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--subtle-fg)", marginTop: "6px" }}>
-            {clients.length} active clients in your portfolio
+          <p style={{ fontSize: "13px", color: "var(--muted-fg)", marginTop: "6px" }}>
+            {clients.length} active client{clients.length === 1 ? "" : "s"} in your portfolio
           </p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">

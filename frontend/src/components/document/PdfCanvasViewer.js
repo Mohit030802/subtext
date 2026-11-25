@@ -302,7 +302,7 @@ export default function PdfCanvasViewer({
         setNumPages(pdf.numPages);
         setLoading(false);
       } catch (err) {
-        console.error("PDF load error:", err);
+        console.warn("PDF load warning:", err?.message || err);
         if (active) {
           setError(err.message || "Failed to load PDF file");
           setLoading(false);
@@ -364,11 +364,12 @@ export default function PdfCanvasViewer({
     };
   }, [pdfDoc, scale, loading, clauseRisks]);
 
-  // 5. Scroll to active risk when "View in doc" is clicked
+  // 5. Scroll to active risk when "Inspect in PDF" is clicked (and once PDF + boxes finish rendering)
   useEffect(() => {
-    if (!activeRisk) return;
+    if (!activeRisk || loading) return;
 
-    const targetPageNum = activeRisk.page_number ? Number(activeRisk.page_number) : 1;
+    const matchedBox = pageBoxes[activeRisk.id];
+    const targetPageNum = matchedBox?.page || (activeRisk.page_number ? Number(activeRisk.page_number) : 1);
     setCurrentPage(targetPageNum);
 
     const timer = setTimeout(() => {
@@ -386,7 +387,7 @@ export default function PdfCanvasViewer({
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [activeRisk]);
+  }, [activeRisk, loading, pageBoxes]);
 
   const handleZoomIn = () => setScale(s => Math.min(2.2, +(s + 0.2).toFixed(2)));
   const handleZoomOut = () => setScale(s => Math.max(0.7, +(s - 0.2).toFixed(2)));
@@ -434,7 +435,7 @@ export default function PdfCanvasViewer({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#1f1f23", position: "relative" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--desk)", position: "relative" }}>
       {/* ── PDF Toolbar ── */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",

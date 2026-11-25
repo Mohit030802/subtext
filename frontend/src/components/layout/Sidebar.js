@@ -250,11 +250,11 @@ export default function Sidebar({ navTree = [] }) {
               key={href}
               href={href}
               className="nav-item"
-              style={active ? { background: "var(--sidebar-accent)", color: "var(--fg)", fontWeight: 500 } : {}}
+              style={active ? { background: "var(--sidebar-accent)", color: "var(--primary)", fontWeight: 600 } : {}}
             >
               {active && (
                 <span style={{
-                  position: "absolute", left: 0, top: "4px", bottom: "4px",
+                  position: "absolute", left: 0, top: "6px", bottom: "6px",
                   width: "2px", background: "var(--primary)", borderRadius: "0 2px 2px 0",
                 }} />
               )}
@@ -313,7 +313,7 @@ export default function Sidebar({ navTree = [] }) {
         </Link>
       </div>
 
-      {/* Buy Me a Coffee / Fuel Subtext */}
+      {/* Support Subtext */}
       <div style={{ padding: "0 12px 10px" }}>
         <Link
           href="/coffee"
@@ -322,25 +322,25 @@ export default function Sidebar({ navTree = [] }) {
             alignItems: "center",
             gap: "8px",
             padding: "8px 12px",
-            borderRadius: "8px",
+            borderRadius: "6px",
             fontSize: "12px",
-            fontWeight: 600,
-            color: "#fbbf24",
-            background: "rgba(245, 158, 11, 0.08)",
-            border: "1px solid rgba(245, 158, 11, 0.2)",
+            fontWeight: 500,
+            color: "var(--text-2)",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
             textDecoration: "none",
-            transition: "all 0.15s ease",
+            transition: "all 0.12s ease",
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = "rgba(245, 158, 11, 0.15)";
-            e.currentTarget.style.borderColor = "rgba(245, 158, 11, 0.35)";
+            e.currentTarget.style.borderColor = "var(--border-hover)";
+            e.currentTarget.style.color = "var(--primary)";
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.background = "rgba(245, 158, 11, 0.08)";
-            e.currentTarget.style.borderColor = "rgba(245, 158, 11, 0.2)";
+            e.currentTarget.style.borderColor = "var(--border)";
+            e.currentTarget.style.color = "var(--text-2)";
           }}
         >
-          <Coffee size={14} color="#f59e0b" />
+          <Coffee size={13} color="var(--primary)" />
           <span>Support Subtext</span>
         </Link>
       </div>

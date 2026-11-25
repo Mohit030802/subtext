@@ -78,9 +78,9 @@ export default function NewProjectModal({ clientId, onClose }) {
               name="name" required autoFocus
               placeholder="e.g. Master Services Agreement, Vendor Review"
               style={{
-                width: "100%", padding: "10px 12px", borderRadius: "8px",
-                background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--border)",
-                color: "#fafafa", fontSize: "14px", outline: "none"
+                width: "100%", padding: "10px 12px", borderRadius: "6px",
+                background: "var(--surface-xs)", border: "1px solid var(--border)",
+                color: "var(--fg)", fontSize: "13.5px", outline: "none"
               }}
               onFocus={e => e.target.style.borderColor = "var(--primary)"}
               onBlur={e => e.target.style.borderColor = "var(--border)"}
@@ -95,9 +95,9 @@ export default function NewProjectModal({ clientId, onClose }) {
               name="description" rows={2}
               placeholder="Optional notes or project scope"
               style={{
-                width: "100%", padding: "10px 12px", borderRadius: "8px",
-                background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--border)",
-                color: "#fafafa", fontSize: "14px", outline: "none", resize: "none"
+                width: "100%", padding: "10px 12px", borderRadius: "6px",
+                background: "var(--surface-xs)", border: "1px solid var(--border)",
+                color: "var(--fg)", fontSize: "13.5px", outline: "none", resize: "none"
               }}
               onFocus={e => e.target.style.borderColor = "var(--primary)"}
               onBlur={e => e.target.style.borderColor = "var(--border)"}
@@ -135,11 +135,7 @@ export default function NewProjectModal({ clientId, onClose }) {
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
             <button
               type="button" onClick={onClose}
-              style={{
-                padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-                background: "transparent", color: "#fafafa", border: "1px solid var(--border)",
-                cursor: "pointer"
-              }}
+              className="btn btn-secondary"
             >
               Cancel
             </button>
